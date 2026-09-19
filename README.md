@@ -1,20 +1,21 @@
 # Budżet domowy – Dom przy Wiśniowa 9
 
-Wersja: v1001
+Wersja: v1002
 
-## GitHub Pages
-1. Wgraj wszystkie pliki z tej paczki do głównego katalogu repozytorium.
-2. W GitHub wejdź: Settings → Pages.
-3. Wybierz Deploy from a branch → main → / (root).
-4. Po publikacji otwórz stronę przez HTTPS i użyj opcji „Zainstaluj aplikację” w przeglądarce.
+## Zmiany v1002
+- Wydatki, Historia i Raporty mają jeden subtelny granatowy styl.
+- Koniec ma subtelny ciemnoczerwony styl.
+- Dodano działający formularz Wydatki: kwota, kategoria i data.
+- Data ustawia się automatycznie na bieżący dzień, ale można ją zmienić.
+- Można zrobić zdjęcie paragonu aparatem telefonu lub wybrać zdjęcie z urządzenia.
+- Wydatki i zdjęcia paragonów są zapisywane lokalnie w IndexedDB.
+- Zmieniono cache PWA na v1002.
 
-## Struktura
-- index.html – ekran startowy i widoki modułów
-- styles.css – wygląd i responsywność
-- app.js – nawigacja i obsługa przycisków
-- manifest.webmanifest – instalowanie PWA
-- sw.js – cache aplikacji
-- assets/icons – ikony aplikacji
+## Pliki do podmiany
+- /index.html
+- /styles.css
+- /app.js
+- /sw.js
+- /README.md
 
-## Tło
-W wersji v1001 tło korzysta z dwóch zdjęć Wikimedia Commons poprzez adresy zewnętrzne. W następnej wersji można zastąpić je własnym lokalnym kolażem JPG/WebP.
+Pozostałe pliki z v1001 pozostają bez zmian.
