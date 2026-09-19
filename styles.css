@@ -1,0 +1,89 @@
+:root {
+  --deep: #102820;
+  --green: #245d4b;
+  --green-2: #2f785f;
+  --cream: #f4efe5;
+  --gold: #d7b05c;
+  --glass: rgba(18, 39, 32, .76);
+  --white: #ffffff;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0d211b; color: var(--white); }
+body { min-height: 100svh; overflow: hidden; }
+button { font: inherit; }
+
+.app-shell { min-height: 100svh; width: 100%; position: relative; overflow: hidden; }
+.home-screen { min-height: 100svh; position: relative; display: grid; grid-template-rows: auto 1fr auto; padding: clamp(20px, 4vw, 52px); isolation: isolate; }
+
+.photo-grid { position: absolute; inset: 0; z-index: -2; display: grid; grid-template-columns: 1.15fr .85fr; }
+.photo { background-size: cover; background-position: center; }
+.photo-exterior {
+  background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Modern_house_exterior_with_red_roof_and_landscaped_garden_under_clear_blue_sky.jpg/1280px-Modern_house_exterior_with_red_roof_and_landscaped_garden_under_clear_blue_sky.jpg');
+}
+.photo-interior {
+  background-image: url('https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ea/Living_room_%28Unsplash%29.jpg/1280px-Living_room_%28Unsplash%29.jpg');
+}
+.photo-overlay { position: absolute; inset: 0; background: linear-gradient(105deg, rgba(5,18,14,.28), rgba(5,18,14,.18) 45%, rgba(5,18,14,.48)), linear-gradient(0deg, rgba(8,25,19,.58), transparent 48%); backdrop-filter: saturate(.92); }
+
+.brand-panel {
+  justify-self: start; display: flex; align-items: center; gap: 16px;
+  padding: 14px 20px; border: 1px solid rgba(255,255,255,.28); border-radius: 22px;
+  background: rgba(14,38,30,.72); box-shadow: 0 16px 42px rgba(0,0,0,.25); backdrop-filter: blur(14px);
+}
+.brand-icon { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; background: linear-gradient(145deg, #ddb967, #ad7f2f); color: #17362b; font-size: 34px; font-weight: 900; box-shadow: inset 0 1px 0 rgba(255,255,255,.45); }
+.brand-panel h1 { margin: 0; font-size: clamp(24px, 3vw, 42px); letter-spacing: -.03em; }
+.brand-panel p { margin: 3px 0 0; color: rgba(255,255,255,.88); font-size: clamp(14px, 1.3vw, 18px); }
+
+.main-actions {
+  align-self: center; justify-self: center; width: min(920px, 92vw);
+  display: grid; grid-template-columns: repeat(4, minmax(145px, 1fr)); gap: clamp(14px, 2vw, 22px);
+}
+.menu-btn {
+  min-height: 132px; border: 1px solid rgba(255,255,255,.28); border-radius: 26px; cursor: pointer;
+  color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px;
+  font-weight: 800; font-size: clamp(18px, 2vw, 24px); text-shadow: 0 2px 8px rgba(0,0,0,.3);
+  box-shadow: 0 16px 36px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.23);
+  backdrop-filter: blur(12px); transition: transform .18s ease, filter .18s ease, box-shadow .18s ease;
+}
+.menu-btn:hover { transform: translateY(-5px); filter: brightness(1.08); box-shadow: 0 22px 42px rgba(0,0,0,.33), inset 0 1px 0 rgba(255,255,255,.3); }
+.menu-btn:active { transform: translateY(-1px) scale(.985); }
+.menu-emoji { font-size: 36px; line-height: 1; }
+.expenses { background: linear-gradient(145deg, rgba(34,100,74,.90), rgba(17,58,43,.88)); }
+.history  { background: linear-gradient(145deg, rgba(55,76,90,.90), rgba(29,49,61,.88)); }
+.reports  { background: linear-gradient(145deg, rgba(151,111,42,.90), rgba(94,65,25,.88)); }
+.exit     { background: linear-gradient(145deg, rgba(119,51,47,.90), rgba(77,31,29,.88)); }
+
+.version { justify-self: end; align-self: end; padding: 6px 10px; border-radius: 10px; font-size: 12px; color: rgba(255,255,255,.72); background: rgba(0,0,0,.27); }
+
+.content-screen { min-height: 100svh; padding: clamp(18px, 3vw, 38px); background: radial-gradient(circle at 20% 10%, #315f4e 0, #17382d 35%, #0f241d 75%); }
+.content-header { display: flex; gap: 16px; align-items: center; }
+.content-header h2 { margin: 0; font-size: clamp(28px, 4vw, 48px); }
+.content-header p { margin: 3px 0 0; color: rgba(255,255,255,.7); }
+.back-btn { width: 50px; height: 50px; border: 1px solid rgba(255,255,255,.28); background: rgba(255,255,255,.1); color: #fff; border-radius: 16px; cursor: pointer; font-size: 28px; }
+.placeholder-card { margin: clamp(30px, 8vh, 90px) auto 0; width: min(720px, 94vw); padding: 42px; border-radius: 30px; background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.16); text-align: center; box-shadow: 0 22px 60px rgba(0,0,0,.23); backdrop-filter: blur(16px); }
+.placeholder-icon { font-size: 60px; }
+.placeholder-card h3 { font-size: 32px; margin: 16px 0 8px; }
+.placeholder-card p { color: rgba(255,255,255,.78); }
+
+.toast { position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 30px); opacity: 0; pointer-events: none; padding: 12px 18px; border-radius: 14px; background: rgba(10,25,20,.94); border: 1px solid rgba(255,255,255,.15); box-shadow: 0 12px 30px rgba(0,0,0,.32); transition: .22s ease; z-index: 20; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+@media (max-width: 800px) {
+  body { overflow: auto; }
+  .home-screen { padding: 18px; grid-template-rows: auto 1fr auto; }
+  .photo-grid { grid-template-columns: 1fr; grid-template-rows: 46% 54%; }
+  .main-actions { grid-template-columns: repeat(2, 1fr); width: min(520px, 94vw); gap: 12px; }
+  .menu-btn { min-height: 112px; border-radius: 22px; }
+  .brand-panel { padding: 11px 14px; border-radius: 18px; }
+  .brand-icon { width: 44px; height: 44px; font-size: 28px; border-radius: 13px; }
+}
+
+@media (max-width: 430px) {
+  .main-actions { grid-template-columns: 1fr; width: min(340px, 90vw); align-self: end; margin-bottom: 22px; }
+  .menu-btn { min-height: 70px; flex-direction: row; gap: 12px; border-radius: 18px; }
+  .menu-emoji { font-size: 28px; }
+  .photo-grid { grid-template-rows: 42% 58%; }
+  .brand-panel h1 { font-size: 22px; }
+  .brand-panel p { font-size: 13px; }
+}

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#18392f" />
+  <meta name="description" content="Budżet domowy – Dom przy Wiśniowa 9" />
+  <title>Budżet domowy – Dom przy Wiśniowa 9</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./assets/icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="./assets/icons/icon-192.png" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main class="app-shell" id="app">
+    <section class="home-screen" id="homeScreen" aria-label="Ekran główny">
+      <div class="photo-grid" aria-hidden="true">
+        <div class="photo photo-exterior"></div>
+        <div class="photo photo-interior"></div>
+        <div class="photo-overlay"></div>
+      </div>
+
+      <div class="brand-panel">
+        <div class="brand-icon" aria-hidden="true">⌂</div>
+        <div>
+          <h1>Budżet domowy</h1>
+          <p>Dom przy Wiśniowa 9</p>
+        </div>
+      </div>
+
+      <nav class="main-actions" aria-label="Menu główne">
+        <button class="menu-btn expenses" data-view="expenses">
+          <span class="menu-emoji">💳</span><span>Wydatki</span>
+        </button>
+        <button class="menu-btn history" data-view="history">
+          <span class="menu-emoji">🕘</span><span>Historia</span>
+        </button>
+        <button class="menu-btn reports" data-view="reports">
+          <span class="menu-emoji">📊</span><span>Raporty</span>
+        </button>
+        <button class="menu-btn exit" id="exitBtn">
+          <span class="menu-emoji">⏻</span><span>Koniec</span>
+        </button>
+      </nav>
+
+      <div class="version">v1001</div>
+    </section>
+
+    <section class="content-screen" id="contentScreen" hidden>
+      <header class="content-header">
+        <button class="back-btn" id="backBtn" aria-label="Wróć">←</button>
+        <div>
+          <h2 id="contentTitle">Wydatki</h2>
+          <p>Moduł przygotowany do dalszej rozbudowy</p>
+        </div>
+      </header>
+      <div class="placeholder-card" id="placeholderCard">
+        <div class="placeholder-icon">🏠</div>
+        <h3 id="placeholderTitle">Wydatki</h3>
+        <p id="placeholderText">Tu dodamy formularz wydatków domu.</p>
+      </div>
+    </section>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>
