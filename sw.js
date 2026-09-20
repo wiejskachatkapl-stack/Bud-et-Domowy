@@ -1,7 +1,7 @@
-const CACHE = 'budzet-domowy-v1020';
+const CACHE = 'budzet-domowy-v1021';
 const APP_SHELL = [
-  './', './index.html', './styles.css?v=1020', './app.js?v=1020', './manifest.webmanifest',
-  './assets/icons/icon-192.png', './assets/icons/icon-512.png',
+  './', './index.html', './styles.css?v=1021', './app.js?v=1021', './manifest.webmanifest?v=1021',
+  './assets/icons/icon-192.png?v=1021', './assets/icons/icon-512.png?v=1021',
   './assets/images/home_desktop_v1012.png', './assets/images/home_mobile_v1010.png'
 ];
 
@@ -32,7 +32,7 @@ async function cacheFirst(request) {
   const cache = await caches.open(CACHE);
   const cached = await cache.match(request);
   if (cached) return cached;
-  const response = await fetch(request);
+  const response = await fetch(request, { cache: 'no-store' });
   if (response && response.ok) cache.put(request, response.clone());
   return response;
 }
@@ -41,7 +41,7 @@ self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
 
-  if (event.request.mode === 'navigate' || /\.(?:html|css|js)$/.test(url.pathname)) {
+  if (event.request.mode === 'navigate' || /\.(?:html|css|js|webmanifest)$/.test(url.pathname)) {
     event.respondWith(networkFirst(event.request));
     return;
   }
