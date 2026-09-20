@@ -14,17 +14,17 @@ button { -webkit-tap-highlight-color: transparent; }
 
 .app-shell { width: 100%; min-height: 100svh; position: relative; overflow: hidden; }
 
-/* v1005: jedna pełnoekranowa grafika bez wrysowanych przycisków. */
+/* v1007: pełnoekranowe tło z zaakceptowanej grafiki, dopasowane również do telefonu. */
 .home-screen {
   position: relative;
   width: 100vw;
   height: 100svh;
   min-height: 100svh;
   overflow: hidden;
-  background-image: url('./assets/images/home_clean_v1005.png');
+  background-image: url('./assets/images/home_clean_v1007.png');
   background-size: cover;
   background-repeat: no-repeat;
-  background-position: center 47%;
+  background-position: center center;
 }
 
 /* Lekki cień tylko pod menu dla czytelności napisów – nie tworzy osobnej planszy. */
@@ -94,18 +94,18 @@ button { -webkit-tap-highlight-color: transparent; }
 /* Pionowy telefon: tło nadal jest pełnoekranowe, a nie wklejone na inną planszę. */
 @media (max-width: 700px) and (orientation: portrait) {
   .home-screen {
-    background-size: auto 100%;
+    background-size: cover;
     background-position: center center;
   }
 
-  .home-screen::after { height: 45%; }
+  .home-screen::after { height: 46%; }
 
   .main-actions {
-    width: min(78vw, 330px);
+    width: min(76vw, 330px);
     right: auto;
     left: 50%;
     transform: translateX(-50%);
-    bottom: max(24px, env(safe-area-inset-bottom));
+    bottom: clamp(72px, 10vh, 128px);
     gap: 8px;
   }
 

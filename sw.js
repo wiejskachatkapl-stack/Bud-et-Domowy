@@ -1,7 +1,7 @@
-const CACHE = 'budzet-domowy-v1005';
+const CACHE = 'budzet-domowy-v1007';
 const APP_SHELL = [
   './', './index.html', './styles.css', './app.js', './manifest.webmanifest',
-  './assets/icons/icon-192.png', './assets/icons/icon-512.png', './assets/images/home_clean_v1005.png'
+  './assets/icons/icon-192.png', './assets/icons/icon-512.png', './assets/images/home_clean_v1007.png'
 ];
 
 self.addEventListener('install', event => {
