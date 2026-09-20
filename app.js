@@ -432,5 +432,19 @@ dateInput.value = todayISO();
 galleryDateInput.value = todayISO();
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
+  window.addEventListener('load', async () => {
+    try {
+      const registration = await navigator.serviceWorker.register('./sw.js?v=1015');
+      await registration.update();
+
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return;
+        refreshing = true;
+        window.location.reload();
+      });
+    } catch (error) {
+      console.error('Błąd aktualizacji PWA:', error);
+    }
+  });
 }
