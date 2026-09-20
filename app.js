@@ -27,6 +27,8 @@ const galleryEmpty = document.getElementById('galleryEmpty');
 
 let selectedReceipt = null;
 let previewUrl = '';
+let activeGalleryDate = null;
+let suppressGalleryClick = false;
 
 const viewCopy = {
   history: ['Historia', 'Archiwum wydatków', 'Tutaj pojawi się chronologiczna historia zapisanych wydatków i paragonów.'],
@@ -93,6 +95,7 @@ function openView(key) {
     expenseForm.hidden = true;
     placeholderCard.hidden = true;
     galleryCard.hidden = false;
+    activeGalleryDate = null;
     if (!galleryDateInput.value) galleryDateInput.value = todayISO();
     renderGallery();
     return;
@@ -219,6 +222,44 @@ function formatFolderDate(dateStr) {
   }).format(date);
 }
 
+function attachLongPress(target, onLongPress) {
+  let timer = null;
+  let startX = 0;
+  let startY = 0;
+
+  const clear = () => {
+    if (timer) window.clearTimeout(timer);
+    timer = null;
+  };
+
+  target.addEventListener('pointerdown', event => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    startX = event.clientX;
+    startY = event.clientY;
+    clear();
+    timer = window.setTimeout(() => {
+      suppressGalleryClick = true;
+      onLongPress();
+      if (navigator.vibrate) navigator.vibrate(25);
+      window.setTimeout(() => { suppressGalleryClick = false; }, 450);
+    }, 700);
+  });
+
+  target.addEventListener('pointermove', event => {
+    if (Math.abs(event.clientX - startX) > 10 || Math.abs(event.clientY - startY) > 10) clear();
+  });
+  target.addEventListener('pointerup', clear);
+  target.addEventListener('pointercancel', clear);
+  target.addEventListener('pointerleave', clear);
+  target.addEventListener('contextmenu', event => event.preventDefault());
+}
+
+function clearDeleteModes(except = null) {
+  document.querySelectorAll('.gallery-folder.delete-mode, .gallery-thumb-item.delete-mode').forEach(el => {
+    if (el !== except) el.classList.remove('delete-mode');
+  });
+}
+
 function createPhotoThumb(photo) {
   const item = document.createElement('div');
   item.className = 'gallery-thumb-item';
@@ -236,6 +277,7 @@ function createPhotoThumb(photo) {
   wrapper.appendChild(img);
 
   wrapper.addEventListener('click', () => {
+    if (suppressGalleryClick || item.classList.contains('delete-mode')) return;
     const fullUrl = URL.createObjectURL(photo.file);
     const overlay = document.createElement('div');
     overlay.className = 'gallery-lightbox';
@@ -251,6 +293,11 @@ function createPhotoThumb(photo) {
     overlay.querySelector('.gallery-lightbox-close').addEventListener('click', close);
     overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
     document.body.appendChild(overlay);
+  });
+
+  attachLongPress(wrapper, () => {
+    clearDeleteModes(item);
+    item.classList.add('delete-mode');
   });
 
   const deleteBtn = document.createElement('button');
@@ -276,70 +323,116 @@ function createPhotoThumb(photo) {
   return item;
 }
 
+function renderFolderList(groups) {
+  Object.keys(groups).sort().reverse().forEach(date => {
+    const folder = document.createElement('section');
+    folder.className = 'gallery-folder';
+
+    const head = document.createElement('div');
+    head.className = 'gallery-folder-head';
+
+    const openBtn = document.createElement('button');
+    openBtn.type = 'button';
+    openBtn.className = 'gallery-folder-toggle';
+    openBtn.innerHTML = `<span class="folder-icon">📁</span><span><strong>${formatFolderDate(date)}</strong><small>${groups[date].length} ${groups[date].length === 1 ? 'zdjęcie' : 'zdjęcia'}</small></span><span class="folder-arrow">›</span>`;
+    openBtn.setAttribute('aria-label', `Otwórz katalog ${formatFolderDate(date)}`);
+
+    openBtn.addEventListener('click', async () => {
+      if (suppressGalleryClick || folder.classList.contains('delete-mode')) return;
+      activeGalleryDate = date;
+      await renderGallery();
+    });
+
+    attachLongPress(openBtn, () => {
+      clearDeleteModes(folder);
+      folder.classList.add('delete-mode');
+    });
+
+    const deleteFolderBtn = document.createElement('button');
+    deleteFolderBtn.type = 'button';
+    deleteFolderBtn.className = 'gallery-folder-delete';
+    deleteFolderBtn.textContent = 'Usuń katalog';
+    deleteFolderBtn.setAttribute('aria-label', `Usuń katalog ${formatFolderDate(date)}`);
+    deleteFolderBtn.addEventListener('click', async event => {
+      event.stopPropagation();
+      const count = groups[date].length;
+      const message = count === 1
+        ? `Usunąć katalog z dnia ${formatFolderDate(date)} razem z 1 zdjęciem?`
+        : `Usunąć katalog z dnia ${formatFolderDate(date)} razem ze wszystkimi ${count} zdjęciami?`;
+      if (!window.confirm(message)) return;
+      try {
+        await deleteGalleryFolder(date);
+        folder.classList.remove('delete-mode');
+        await renderGallery();
+        showToast('Katalog został usunięty.');
+      } catch (error) {
+        console.error(error);
+        showToast('Nie udało się usunąć katalogu.');
+      }
+    });
+
+    head.appendChild(openBtn);
+    head.appendChild(deleteFolderBtn);
+    folder.appendChild(head);
+    galleryFolders.appendChild(folder);
+  });
+}
+
+function renderOpenFolder(date, photos) {
+  const view = document.createElement('section');
+  view.className = 'gallery-open-folder';
+
+  const top = document.createElement('div');
+  top.className = 'gallery-open-folder-head';
+
+  const back = document.createElement('button');
+  back.type = 'button';
+  back.className = 'gallery-folder-back';
+  back.innerHTML = '<span>←</span><span>Foldery</span>';
+  back.addEventListener('click', async () => {
+    activeGalleryDate = null;
+    await renderGallery();
+  });
+
+  const title = document.createElement('div');
+  title.className = 'gallery-open-folder-title';
+  title.innerHTML = `<strong>${formatFolderDate(date)}</strong><small>${photos.length} ${photos.length === 1 ? 'zdjęcie' : 'zdjęcia'}</small>`;
+
+  top.appendChild(back);
+  top.appendChild(title);
+
+  const grid = document.createElement('div');
+  grid.className = 'gallery-photo-grid';
+  photos
+    .sort((a,b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
+    .forEach(photo => grid.appendChild(createPhotoThumb(photo)));
+
+  view.appendChild(top);
+  view.appendChild(grid);
+  galleryFolders.appendChild(view);
+}
+
 async function renderGallery() {
   try {
     const photos = await getGalleryPhotos();
-    galleryFolders.querySelectorAll('.gallery-folder').forEach(el => el.remove());
+    galleryFolders.querySelectorAll('.gallery-folder, .gallery-open-folder').forEach(el => el.remove());
     galleryEmpty.hidden = photos.length > 0;
-    if (!photos.length) return;
+    if (!photos.length) {
+      activeGalleryDate = null;
+      return;
+    }
 
     const groups = photos.reduce((acc, photo) => {
       (acc[photo.date] ||= []).push(photo);
       return acc;
     }, {});
 
-    Object.keys(groups).sort().reverse().forEach(date => {
-      const folder = document.createElement('section');
-      folder.className = 'gallery-folder open';
-
-      const head = document.createElement('div');
-      head.className = 'gallery-folder-head';
-
-      const toggle = document.createElement('button');
-      toggle.type = 'button';
-      toggle.className = 'gallery-folder-toggle';
-      toggle.innerHTML = `<span class="folder-icon">📁</span><span><strong>${formatFolderDate(date)}</strong><small>${groups[date].length} ${groups[date].length === 1 ? 'zdjęcie' : 'zdjęcia'}</small></span><span class="folder-arrow">⌄</span>`;
-
-      const deleteFolderBtn = document.createElement('button');
-      deleteFolderBtn.type = 'button';
-      deleteFolderBtn.className = 'gallery-folder-delete';
-      deleteFolderBtn.textContent = 'Usuń katalog';
-      deleteFolderBtn.setAttribute('aria-label', `Usuń katalog ${formatFolderDate(date)}`);
-
-      const grid = document.createElement('div');
-      grid.className = 'gallery-photo-grid';
-      groups[date]
-        .sort((a,b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
-        .forEach(photo => grid.appendChild(createPhotoThumb(photo)));
-
-      toggle.addEventListener('click', () => {
-        const isClosed = grid.hidden;
-        grid.hidden = !isClosed;
-        folder.classList.toggle('open', isClosed);
-      });
-
-      deleteFolderBtn.addEventListener('click', async () => {
-        const count = groups[date].length;
-        const message = count === 1
-          ? `Usunąć katalog z dnia ${formatFolderDate(date)} razem z 1 zdjęciem?`
-          : `Usunąć katalog z dnia ${formatFolderDate(date)} razem ze wszystkimi ${count} zdjęciami?`;
-        if (!window.confirm(message)) return;
-        try {
-          await deleteGalleryFolder(date);
-          await renderGallery();
-          showToast('Katalog został usunięty.');
-        } catch (error) {
-          console.error(error);
-          showToast('Nie udało się usunąć katalogu.');
-        }
-      });
-
-      head.appendChild(toggle);
-      head.appendChild(deleteFolderBtn);
-      folder.appendChild(head);
-      folder.appendChild(grid);
-      galleryFolders.appendChild(folder);
-    });
+    if (activeGalleryDate && groups[activeGalleryDate]) {
+      renderOpenFolder(activeGalleryDate, groups[activeGalleryDate]);
+    } else {
+      activeGalleryDate = null;
+      renderFolderList(groups);
+    }
   } catch (error) {
     console.error(error);
     showToast('Nie udało się wczytać galerii.');
@@ -416,7 +509,14 @@ document.querySelectorAll('[data-view]').forEach(btn => {
   btn.addEventListener('click', () => openView(btn.dataset.view));
 });
 
-backBtn.addEventListener('click', openHome);
+backBtn.addEventListener('click', async () => {
+  if (!galleryCard.hidden && activeGalleryDate) {
+    activeGalleryDate = null;
+    await renderGallery();
+    return;
+  }
+  openHome();
+});
 
 cancelExpenseBtn.addEventListener('click', () => {
   resetExpenseForm();
@@ -434,7 +534,7 @@ galleryDateInput.value = todayISO();
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=1015');
+      const registration = await navigator.serviceWorker.register('./sw.js?v=1016');
       await registration.update();
 
       let refreshing = false;
