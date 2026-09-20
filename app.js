@@ -18,6 +18,12 @@ const cancelExpenseBtn = document.getElementById('cancelExpenseBtn');
 const backBtn = document.getElementById('backBtn');
 const exitBtn = document.getElementById('exitBtn');
 const toast = document.getElementById('toast');
+const galleryCard = document.getElementById('galleryCard');
+const galleryDateInput = document.getElementById('galleryDateInput');
+const galleryCameraInput = document.getElementById('galleryCameraInput');
+const galleryFileInput = document.getElementById('galleryFileInput');
+const galleryFolders = document.getElementById('galleryFolders');
+const galleryEmpty = document.getElementById('galleryEmpty');
 
 let selectedReceipt = null;
 let previewUrl = '';
@@ -63,6 +69,7 @@ function openHome() {
   homeScreen.hidden = false;
   placeholderCard.hidden = true;
   expenseForm.hidden = true;
+  galleryCard.hidden = true;
 }
 
 function openView(key) {
@@ -73,9 +80,21 @@ function openView(key) {
     contentTitle.textContent = 'Wydatki';
     contentSubtitle.textContent = 'Dodaj nowy wydatek';
     placeholderCard.hidden = true;
+    galleryCard.hidden = true;
     expenseForm.hidden = false;
     if (!dateInput.value) dateInput.value = todayISO();
     window.setTimeout(() => amountInput.focus(), 80);
+    return;
+  }
+
+  if (key === 'gallery') {
+    contentTitle.textContent = 'Galeria';
+    contentSubtitle.textContent = 'Zdjęcia pogrupowane według dat';
+    expenseForm.hidden = true;
+    placeholderCard.hidden = true;
+    galleryCard.hidden = false;
+    if (!galleryDateInput.value) galleryDateInput.value = todayISO();
+    renderGallery();
     return;
   }
 
@@ -85,12 +104,13 @@ function openView(key) {
   placeholderTitle.textContent = title;
   placeholderText.textContent = text;
   expenseForm.hidden = true;
+  galleryCard.hidden = true;
   placeholderCard.hidden = false;
 }
 
 function openDatabase() {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('BudzetDomowyDB', 1);
+    const request = indexedDB.open('BudzetDomowyDB', 2);
 
     request.onupgradeneeded = () => {
       const db = request.result;
@@ -98,6 +118,11 @@ function openDatabase() {
         const store = db.createObjectStore('expenses', { keyPath: 'id', autoIncrement: true });
         store.createIndex('date', 'date', { unique: false });
         store.createIndex('category', 'category', { unique: false });
+      }
+      if (!db.objectStoreNames.contains('galleryPhotos')) {
+        const galleryStore = db.createObjectStore('galleryPhotos', { keyPath: 'id', autoIncrement: true });
+        galleryStore.createIndex('date', 'date', { unique: false });
+        galleryStore.createIndex('createdAt', 'createdAt', { unique: false });
       }
     };
 
@@ -118,6 +143,134 @@ async function saveExpense(expense) {
     transaction.oncomplete = () => db.close();
   });
 }
+
+async function saveGalleryPhoto(file, date) {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction('galleryPhotos', 'readwrite');
+    const store = transaction.objectStore('galleryPhotos');
+    const request = store.add({
+      date,
+      file,
+      name: file.name || 'zdjęcie',
+      type: file.type || 'image/jpeg',
+      createdAt: new Date().toISOString()
+    });
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+    transaction.oncomplete = () => db.close();
+  });
+}
+
+async function getGalleryPhotos() {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction('galleryPhotos', 'readonly');
+    const store = transaction.objectStore('galleryPhotos');
+    const request = store.getAll();
+    request.onsuccess = () => resolve(request.result || []);
+    request.onerror = () => reject(request.error);
+    transaction.oncomplete = () => db.close();
+  });
+}
+
+function formatFolderDate(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  return new Intl.DateTimeFormat('pl-PL', {
+    day: '2-digit', month: 'long', year: 'numeric'
+  }).format(date);
+}
+
+function createPhotoThumb(photo) {
+  const wrapper = document.createElement('button');
+  wrapper.type = 'button';
+  wrapper.className = 'gallery-thumb';
+  const img = document.createElement('img');
+  const url = URL.createObjectURL(photo.file);
+  img.src = url;
+  img.alt = photo.name || 'Zdjęcie';
+  img.onload = () => URL.revokeObjectURL(url);
+  wrapper.appendChild(img);
+  wrapper.addEventListener('click', () => {
+    const fullUrl = URL.createObjectURL(photo.file);
+    const overlay = document.createElement('div');
+    overlay.className = 'gallery-lightbox';
+    overlay.innerHTML = '<button type="button" class="gallery-lightbox-close" aria-label="Zamknij">×</button>';
+    const full = document.createElement('img');
+    full.src = fullUrl;
+    full.alt = photo.name || 'Zdjęcie';
+    overlay.appendChild(full);
+    const close = () => {
+      URL.revokeObjectURL(fullUrl);
+      overlay.remove();
+    };
+    overlay.querySelector('.gallery-lightbox-close').addEventListener('click', close);
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+    document.body.appendChild(overlay);
+  });
+  return wrapper;
+}
+
+async function renderGallery() {
+  try {
+    const photos = await getGalleryPhotos();
+    galleryFolders.querySelectorAll('.gallery-folder').forEach(el => el.remove());
+    galleryEmpty.hidden = photos.length > 0;
+    if (!photos.length) return;
+
+    const groups = photos.reduce((acc, photo) => {
+      (acc[photo.date] ||= []).push(photo);
+      return acc;
+    }, {});
+
+    Object.keys(groups).sort().reverse().forEach(date => {
+      const folder = document.createElement('section');
+      folder.className = 'gallery-folder';
+
+      const head = document.createElement('button');
+      head.type = 'button';
+      head.className = 'gallery-folder-head';
+      head.innerHTML = `<span class="folder-icon">📁</span><span><strong>${formatFolderDate(date)}</strong><small>${groups[date].length} ${groups[date].length === 1 ? 'zdjęcie' : 'zdjęcia'}</small></span><span class="folder-arrow">⌄</span>`;
+
+      const grid = document.createElement('div');
+      grid.className = 'gallery-photo-grid';
+      groups[date].sort((a,b) => (b.createdAt || '').localeCompare(a.createdAt || '')).forEach(photo => grid.appendChild(createPhotoThumb(photo)));
+
+      head.addEventListener('click', () => {
+        const isClosed = grid.hidden;
+        grid.hidden = !isClosed;
+        folder.classList.toggle('open', isClosed);
+      });
+
+      folder.appendChild(head);
+      folder.appendChild(grid);
+      galleryFolders.appendChild(folder);
+    });
+  } catch (error) {
+    console.error(error);
+    showToast('Nie udało się wczytać galerii.');
+  }
+}
+
+async function addGalleryFiles(fileList) {
+  const files = [...(fileList || [])].filter(file => file.type.startsWith('image/'));
+  if (!files.length) return;
+  const date = galleryDateInput.value || todayISO();
+  try {
+    for (const file of files) await saveGalleryPhoto(file, date);
+    galleryCameraInput.value = '';
+    galleryFileInput.value = '';
+    await renderGallery();
+    showToast(files.length === 1 ? 'Zdjęcie zostało dodane.' : `Dodano ${files.length} zdjęcia.`);
+  } catch (error) {
+    console.error(error);
+    showToast('Nie udało się zapisać zdjęcia.');
+  }
+}
+
+galleryCameraInput.addEventListener('change', () => addGalleryFiles(galleryCameraInput.files));
+galleryFileInput.addEventListener('change', () => addGalleryFiles(galleryFileInput.files));
 
 receiptInput.addEventListener('change', () => {
   const file = receiptInput.files?.[0];
@@ -183,6 +336,7 @@ exitBtn.addEventListener('click', () => {
 });
 
 dateInput.value = todayISO();
+galleryDateInput.value = todayISO();
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));

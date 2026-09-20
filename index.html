@@ -30,13 +30,18 @@
           <span class="menu-label">Raporty</span>
           <span class="menu-arrow" aria-hidden="true">›</span>
         </button>
+        <button class="menu-btn" data-view="gallery" aria-label="Galeria">
+          <span class="menu-icon" aria-hidden="true">▧</span>
+          <span class="menu-label">Galeria</span>
+          <span class="menu-arrow" aria-hidden="true">›</span>
+        </button>
         <button class="menu-btn exit" id="exitBtn" aria-label="Koniec">
           <span class="menu-icon" aria-hidden="true">⏻</span>
           <span class="menu-label">Koniec</span>
           <span class="menu-arrow" aria-hidden="true">›</span>
         </button>
       </nav>
-      <div class="version">v1012</div>
+      <div class="version">v1013</div>
     </section>
 
     <section class="content-screen" id="contentScreen" hidden>
@@ -107,6 +112,35 @@
           <button class="action-btn cancel" type="button" id="cancelExpenseBtn">Anuluj</button>
         </div>
       </form>
+
+      <section class="gallery-card" id="galleryCard" hidden>
+        <div class="gallery-toolbar">
+          <label class="field gallery-date-field">
+            <span>Data folderu</span>
+            <input id="galleryDateInput" type="date" />
+          </label>
+
+          <div class="gallery-add-actions">
+            <label class="gallery-action-btn" for="galleryCameraInput">
+              <span>📷</span><strong>Zrób zdjęcie</strong>
+            </label>
+            <input id="galleryCameraInput" type="file" accept="image/*" capture="environment" hidden />
+
+            <label class="gallery-action-btn" for="galleryFileInput">
+              <span>🖼️</span><strong>Dodaj zdjęcie</strong>
+            </label>
+            <input id="galleryFileInput" type="file" accept="image/*" multiple hidden />
+          </div>
+        </div>
+
+        <div class="gallery-folders" id="galleryFolders">
+          <div class="gallery-empty" id="galleryEmpty">
+            <div>📁</div>
+            <strong>Galeria jest pusta</strong>
+            <span>Zrób pierwsze zdjęcie lub dodaj je z urządzenia.</span>
+          </div>
+        </div>
+      </section>
 
       <div class="placeholder-card" id="placeholderCard" hidden>
         <div class="placeholder-icon">🏠</div>

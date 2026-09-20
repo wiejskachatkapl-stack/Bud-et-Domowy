@@ -13,7 +13,7 @@ button,input,select{font:inherit}
 button{-webkit-tap-highlight-color:transparent}
 .app-shell{width:100%;min-height:100svh;position:relative;overflow:hidden}
 
-/* ===== EKRAN STARTOWY v1012 =====
+/* ===== EKRAN STARTOWY v1013 =====
    Osobne pełnoekranowe tło dla komputera i telefonu.
    Przyciski są niezależnymi elementami HTML/CSS. */
 .home-screen{
@@ -41,11 +41,11 @@ button{-webkit-tap-highlight-color:transparent}
   z-index:2;
   width:min(360px,25vw);
   right:clamp(26px,4.2vw,78px);
-  top:50%;
+  top:44%;
   transform:translateY(-2%);
   display:grid;
   grid-template-columns:1fr;
-  gap:9px;
+  gap:8px;
 }
 .menu-btn{
   width:100%;
@@ -89,7 +89,7 @@ button{-webkit-tap-highlight-color:transparent}
     width:min(74vw,320px);
     right:auto;
     left:50%;
-    top:61%;
+    top:56%;
     bottom:auto;
     transform:translateX(-50%);
     gap:7px;
@@ -137,4 +137,42 @@ button{-webkit-tap-highlight-color:transparent}
 .form-actions{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:480px;margin:0 auto}.action-btn{min-height:52px;border-radius:15px;border:1px solid rgba(255,255,255,.16);color:#fff;cursor:pointer;font-weight:800;font-size:17px;box-shadow:0 10px 22px rgba(0,0,0,.18)}.action-btn.save{background:linear-gradient(145deg,#214d7d,#153756)}.action-btn.cancel{background:linear-gradient(145deg,#713034,#4f2023)}
 .placeholder-card{margin:clamp(30px,8vh,90px) auto 0;width:min(720px,94vw);padding:42px;border-radius:30px;background:rgba(255,255,255,.075);border:1px solid rgba(255,255,255,.14);text-align:center;box-shadow:0 22px 60px rgba(0,0,0,.23);backdrop-filter:blur(16px)}.placeholder-icon{font-size:60px}.placeholder-card h3{font-size:32px;margin:16px 0 8px}.placeholder-card p{color:rgba(255,255,255,.75)}
 .toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,30px);opacity:0;pointer-events:none;max-width:min(92vw,520px);text-align:center;padding:12px 18px;border-radius:14px;background:rgba(8,20,34,.96);border:1px solid rgba(255,255,255,.14);box-shadow:0 12px 30px rgba(0,0,0,.32);transition:.22s ease;z-index:20}.toast.show{opacity:1;transform:translate(-50%,0)}
+
+
+/* ===== GALERIA ===== */
+.gallery-card{
+  margin:clamp(24px,5vh,48px) auto 30px;
+  width:min(980px,96vw);
+  padding:clamp(18px,3vw,30px);
+  border-radius:28px;
+  background:rgba(255,255,255,.075);
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:0 22px 58px rgba(0,0,0,.25);
+  backdrop-filter:blur(16px);
+}
+.gallery-toolbar{display:grid;grid-template-columns:minmax(180px,260px) 1fr;gap:18px;align-items:end;margin-bottom:22px}
+.gallery-date-field input{min-height:48px}
+.gallery-add-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.gallery-action-btn{min-height:48px;padding:0 18px;border-radius:15px;border:1px solid rgba(255,255,255,.15);background:linear-gradient(145deg,#214d7d,#153756);color:#fff;display:flex;align-items:center;justify-content:center;gap:9px;cursor:pointer;box-shadow:0 9px 20px rgba(0,0,0,.18)}
+.gallery-action-btn:hover{filter:brightness(1.06)}
+.gallery-folders{display:grid;gap:12px}
+.gallery-empty{padding:44px 20px;text-align:center;border:1px dashed rgba(255,255,255,.18);border-radius:20px;color:rgba(255,255,255,.72)}
+.gallery-empty>div{font-size:48px;margin-bottom:8px}.gallery-empty strong{display:block;color:#fff;font-size:20px}.gallery-empty span{display:block;margin-top:5px;font-size:14px}
+.gallery-folder{border:1px solid rgba(255,255,255,.12);border-radius:18px;overflow:hidden;background:rgba(7,18,31,.42)}
+.gallery-folder-head{width:100%;border:0;background:rgba(255,255,255,.055);color:#fff;padding:14px 16px;display:grid;grid-template-columns:38px 1fr 24px;gap:10px;align-items:center;text-align:left;cursor:pointer}
+.folder-icon{font-size:25px}.gallery-folder-head strong{display:block;font-size:16px}.gallery-folder-head small{display:block;margin-top:2px;color:rgba(255,255,255,.58);font-size:12px}.folder-arrow{font-size:22px;transition:transform .18s ease}.gallery-folder.open .folder-arrow{transform:rotate(180deg)}
+.gallery-photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px;padding:12px}
+.gallery-thumb{border:0;padding:0;border-radius:13px;overflow:hidden;background:#0a1727;aspect-ratio:1/1;cursor:pointer;box-shadow:0 6px 14px rgba(0,0,0,.18)}
+.gallery-thumb img{width:100%;height:100%;display:block;object-fit:cover;transition:transform .18s ease}.gallery-thumb:hover img{transform:scale(1.035)}
+.gallery-lightbox{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.88);display:grid;place-items:center;padding:28px}
+.gallery-lightbox img{max-width:94vw;max-height:90vh;object-fit:contain;border-radius:12px;box-shadow:0 20px 55px rgba(0,0,0,.45)}
+.gallery-lightbox-close{position:fixed;top:18px;right:18px;width:44px;height:44px;border:0;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font-size:30px;line-height:1;cursor:pointer}
+@media (max-width:700px){
+  .gallery-card{width:100%;padding:16px 13px;border-radius:22px}
+  .gallery-toolbar{grid-template-columns:1fr;gap:12px}
+  .gallery-add-actions{display:grid;grid-template-columns:1fr 1fr}
+  .gallery-action-btn{padding:0 10px;font-size:14px}
+  .gallery-photo-grid{grid-template-columns:repeat(3,1fr);gap:7px;padding:9px}
+}
+
 @media (max-width:600px){body{overflow:auto}.form-row{grid-template-columns:1fr;gap:15px;margin-bottom:15px}.expense-card{width:100%;border-radius:22px}}
