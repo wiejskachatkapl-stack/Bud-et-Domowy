@@ -9,6 +9,7 @@ const expenseForm = document.getElementById('expenseForm');
 const amountInput = document.getElementById('amountInput');
 const categoryInput = document.getElementById('categoryInput');
 const dateInput = document.getElementById('dateInput');
+const notesInput = document.getElementById('notesInput');
 const receiptInput = document.getElementById('receiptInput');
 const receiptPreview = document.getElementById('receiptPreview');
 const receiptImage = document.getElementById('receiptImage');
@@ -24,16 +25,23 @@ const galleryCameraInput = document.getElementById('galleryCameraInput');
 const galleryFileInput = document.getElementById('galleryFileInput');
 const galleryFolders = document.getElementById('galleryFolders');
 const galleryEmpty = document.getElementById('galleryEmpty');
+const historyCard = document.getElementById('historyCard');
+const historyList = document.getElementById('historyList');
+const historyTotal = document.getElementById('historyTotal');
+const historyCount = document.getElementById('historyCount');
+const reportsCard = document.getElementById('reportsCard');
+const reportTotal = document.getElementById('reportTotal');
+const reportCount = document.getElementById('reportCount');
+const reportAverage = document.getElementById('reportAverage');
+const reportCategories = document.getElementById('reportCategories');
+const reportMonths = document.getElementById('reportMonths');
 
 let selectedReceipt = null;
 let previewUrl = '';
 let activeGalleryDate = null;
 let suppressGalleryClick = false;
 
-const viewCopy = {
-  history: ['Historia', 'Archiwum wydatków', 'Tutaj pojawi się chronologiczna historia zapisanych wydatków i paragonów.'],
-  reports: ['Raporty', 'Podsumowania budżetu', 'Tutaj przygotujemy raporty miesięczne, roczne i podział wydatków według kategorii.']
-};
+const viewCopy = {};
 
 function todayISO() {
   const now = new Date();
@@ -72,6 +80,8 @@ function openHome() {
   placeholderCard.hidden = true;
   expenseForm.hidden = true;
   galleryCard.hidden = true;
+  historyCard.hidden = true;
+  reportsCard.hidden = true;
 }
 
 function openView(key) {
@@ -83,6 +93,8 @@ function openView(key) {
     contentSubtitle.textContent = 'Dodaj nowy wydatek';
     placeholderCard.hidden = true;
     galleryCard.hidden = true;
+    historyCard.hidden = true;
+    reportsCard.hidden = true;
     expenseForm.hidden = false;
     if (!dateInput.value) dateInput.value = todayISO();
     window.setTimeout(() => amountInput.focus(), 80);
@@ -94,6 +106,8 @@ function openView(key) {
     contentSubtitle.textContent = 'Zdjęcia pogrupowane według dat';
     expenseForm.hidden = true;
     placeholderCard.hidden = true;
+    historyCard.hidden = true;
+    reportsCard.hidden = true;
     galleryCard.hidden = false;
     activeGalleryDate = null;
     if (!galleryDateInput.value) galleryDateInput.value = todayISO();
@@ -101,13 +115,39 @@ function openView(key) {
     return;
   }
 
-  const [title, subtitle, text] = viewCopy[key];
+  if (key === 'history') {
+    contentTitle.textContent = 'Historia';
+    contentSubtitle.textContent = 'Wszystkie zapisane wydatki';
+    expenseForm.hidden = true;
+    galleryCard.hidden = true;
+    reportsCard.hidden = true;
+    placeholderCard.hidden = true;
+    historyCard.hidden = false;
+    renderHistory();
+    return;
+  }
+
+  if (key === 'reports') {
+    contentTitle.textContent = 'Raporty';
+    contentSubtitle.textContent = 'Podsumowanie remontu i budowy';
+    expenseForm.hidden = true;
+    galleryCard.hidden = true;
+    historyCard.hidden = true;
+    placeholderCard.hidden = true;
+    reportsCard.hidden = false;
+    renderReports();
+    return;
+  }
+
+  const [title, subtitle, text] = viewCopy[key] || ['Budżet domowy', '', ''];
   contentTitle.textContent = title;
   contentSubtitle.textContent = subtitle;
   placeholderTitle.textContent = title;
   placeholderText.textContent = text;
   expenseForm.hidden = true;
   galleryCard.hidden = true;
+  historyCard.hidden = true;
+  reportsCard.hidden = true;
   placeholderCard.hidden = false;
 }
 
@@ -145,6 +185,113 @@ async function saveExpense(expense) {
     request.onerror = () => reject(request.error);
     transaction.oncomplete = () => db.close();
   });
+}
+
+async function getExpenses() {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction('expenses', 'readonly');
+    const store = transaction.objectStore('expenses');
+    const request = store.getAll();
+    request.onsuccess = () => resolve(request.result || []);
+    request.onerror = () => reject(request.error);
+    transaction.oncomplete = () => db.close();
+  });
+}
+
+function formatMoney(value) {
+  return new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(Number(value) || 0);
+}
+
+function formatExpenseDate(dateStr) {
+  if (!dateStr) return '';
+  const [y,m,d] = dateStr.split('-').map(Number);
+  return new Intl.DateTimeFormat('pl-PL', { day:'2-digit', month:'2-digit', year:'numeric' }).format(new Date(y,m-1,d));
+}
+
+function openImageBlob(blob, alt = 'Paragon') {
+  if (!blob) return;
+  const url = URL.createObjectURL(blob);
+  const overlay = document.createElement('div');
+  overlay.className = 'gallery-lightbox';
+  overlay.innerHTML = '<button type="button" class="gallery-lightbox-close" aria-label="Zamknij">×</button>';
+  const img = document.createElement('img');
+  img.src = url; img.alt = alt; overlay.appendChild(img);
+  const close = () => { URL.revokeObjectURL(url); overlay.remove(); };
+  overlay.querySelector('.gallery-lightbox-close').addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  document.body.appendChild(overlay);
+}
+
+async function renderHistory() {
+  try {
+    const expenses = await getExpenses();
+    expenses.sort((a,b) => ((b.date || '') + (b.createdAt || '')).localeCompare((a.date || '') + (a.createdAt || '')));
+    historyList.innerHTML = '';
+    const total = expenses.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    historyTotal.textContent = formatMoney(total);
+    historyCount.textContent = String(expenses.length);
+    if (!expenses.length) {
+      historyList.innerHTML = '<div class="history-empty"><span>🧾</span><strong>Brak zapisanych wydatków</strong><small>Dodane wydatki pojawią się tutaj automatycznie.</small></div>';
+      return;
+    }
+    expenses.forEach(item => {
+      const row = document.createElement('article');
+      row.className = 'history-item';
+      const note = (item.notes || '').trim();
+      row.innerHTML = `<div class="history-main"><div class="history-category">${escapeHtml(item.category || 'Bez kategorii')}</div><div class="history-date">${formatExpenseDate(item.date)}</div>${note ? `<div class="history-note">${escapeHtml(note)}</div>` : ''}</div><div class="history-side"><strong>${formatMoney(item.amount)}</strong></div>`;
+      if (item.receipt) {
+        const receiptBtn = document.createElement('button');
+        receiptBtn.type='button'; receiptBtn.className='history-receipt-btn'; receiptBtn.textContent='📷 Paragon';
+        receiptBtn.addEventListener('click', () => openImageBlob(item.receipt, `Paragon – ${item.category || ''}`));
+        row.querySelector('.history-side').appendChild(receiptBtn);
+      }
+      historyList.appendChild(row);
+    });
+  } catch (error) { console.error(error); showToast('Nie udało się wczytać historii.'); }
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
+}
+
+function renderReportBars(container, entries, total, formatter = v => v) {
+  container.innerHTML = '';
+  if (!entries.length) {
+    container.innerHTML = '<div class="report-empty">Brak danych do raportu.</div>';
+    return;
+  }
+  entries.forEach(([label, value]) => {
+    const percent = total > 0 ? Math.max(2, (value / total) * 100) : 0;
+    const row = document.createElement('div');
+    row.className='report-bar-row';
+    row.innerHTML=`<div class="report-bar-label"><span>${escapeHtml(formatter(label))}</span><strong>${formatMoney(value)}</strong></div><div class="report-bar-track"><span style="width:${percent}%"></span></div>`;
+    container.appendChild(row);
+  });
+}
+
+async function renderReports() {
+  try {
+    const expenses = await getExpenses();
+    const total = expenses.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    reportTotal.textContent = formatMoney(total);
+    reportCount.textContent = String(expenses.length);
+    reportAverage.textContent = formatMoney(expenses.length ? total / expenses.length : 0);
+    const categories = {}; const months = {};
+    for (const item of expenses) {
+      const amount = Number(item.amount) || 0;
+      const cat = item.category || 'Bez kategorii'; categories[cat] = (categories[cat] || 0) + amount;
+      const month = (item.date || '').slice(0,7) || 'Brak daty'; months[month] = (months[month] || 0) + amount;
+    }
+    const categoryEntries = Object.entries(categories).sort((a,b)=>b[1]-a[1]);
+    const monthEntries = Object.entries(months).sort((a,b)=>b[0].localeCompare(a[0]));
+    renderReportBars(reportCategories, categoryEntries, total);
+    renderReportBars(reportMonths, monthEntries, total, label => {
+      if (label === 'Brak daty') return label;
+      const [y,m] = label.split('-').map(Number);
+      return new Intl.DateTimeFormat('pl-PL',{month:'long',year:'numeric'}).format(new Date(y,m-1,1));
+    });
+  } catch (error) { console.error(error); showToast('Nie udało się przygotować raportów.'); }
 }
 
 async function saveGalleryPhoto(file, date) {
@@ -491,6 +638,7 @@ expenseForm.addEventListener('submit', async event => {
     amount: Math.round(amount * 100) / 100,
     category: categoryInput.value,
     date: dateInput.value,
+    notes: notesInput.value.trim(),
     receipt: selectedReceipt || null,
     createdAt: new Date().toISOString()
   };
@@ -534,7 +682,7 @@ galleryDateInput.value = todayISO();
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=1016');
+      const registration = await navigator.serviceWorker.register('./sw.js?v=1017');
       await registration.update();
 
       let refreshing = false;

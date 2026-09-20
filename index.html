@@ -9,7 +9,7 @@
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" type="image/png" sizes="192x192" href="./assets/icons/icon-192.png" />
   <link rel="apple-touch-icon" href="./assets/icons/icon-192.png" />
-  <link rel="stylesheet" href="./styles.css?v=1016" />
+  <link rel="stylesheet" href="./styles.css?v=1017" />
 </head>
 <body>
   <main class="app-shell" id="app">
@@ -41,7 +41,7 @@
           <span class="menu-arrow" aria-hidden="true">›</span>
         </button>
       </nav>
-      <div class="version">v1016</div>
+      <div class="version">v1017</div>
     </section>
 
     <section class="content-screen" id="contentScreen" hidden>
@@ -67,15 +67,16 @@
             <span>Rodzaj wydatku</span>
             <select id="categoryInput" name="category" required>
               <option value="" selected disabled>Wybierz kategorię</option>
-              <option>Żywność</option>
-              <option>Rachunki i media</option>
-              <option>Dom i wyposażenie</option>
-              <option>Chemia i higiena</option>
-              <option>Transport</option>
-              <option>Zdrowie</option>
-              <option>Ubrania</option>
-              <option>Rozrywka</option>
-              <option>Inne</option>
+              <option>Koszty umowy</option>
+              <option>Notariusz</option>
+              <option>Dach</option>
+              <option>Okna i drzwi</option>
+              <option>Roboty ziemne</option>
+              <option>Remont zewnętrzny</option>
+              <option>Budynki zewnętrzne</option>
+              <option>Woda i kanalizacja</option>
+              <option>Energetyka Gazownia</option>
+              <option>Internet</option>
             </select>
           </label>
         </div>
@@ -96,6 +97,11 @@
           </div>
         </div>
 
+        <label class="field expense-notes-field">
+          <span>Dodatkowe informacje</span>
+          <textarea id="notesInput" name="notes" rows="4" maxlength="1200" placeholder="Np. wykonawca, zakres prac, numer faktury, uwagi..."></textarea>
+        </label>
+
         <div class="receipt-preview" id="receiptPreview" hidden>
           <img id="receiptImage" alt="Podgląd paragonu" />
           <div>
@@ -112,6 +118,30 @@
           <button class="action-btn cancel" type="button" id="cancelExpenseBtn">Anuluj</button>
         </div>
       </form>
+
+      <section class="history-card" id="historyCard" hidden>
+        <div class="history-summary">
+          <div><span>Łącznie</span><strong id="historyTotal">0,00 zł</strong></div>
+          <div><span>Liczba wpisów</span><strong id="historyCount">0</strong></div>
+        </div>
+        <div class="history-list" id="historyList"></div>
+      </section>
+
+      <section class="reports-card" id="reportsCard" hidden>
+        <div class="report-overview">
+          <div class="report-stat"><span>Łączne wydatki</span><strong id="reportTotal">0,00 zł</strong></div>
+          <div class="report-stat"><span>Liczba wydatków</span><strong id="reportCount">0</strong></div>
+          <div class="report-stat"><span>Średni wydatek</span><strong id="reportAverage">0,00 zł</strong></div>
+        </div>
+        <div class="report-section">
+          <h3>Według kategorii</h3>
+          <div id="reportCategories" class="report-bars"></div>
+        </div>
+        <div class="report-section">
+          <h3>Według miesięcy</h3>
+          <div id="reportMonths" class="report-bars"></div>
+        </div>
+      </section>
 
       <section class="gallery-card" id="galleryCard" hidden>
         <div class="gallery-toolbar">
@@ -152,6 +182,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </main>
-  <script src="./app.js?v=1016"></script>
+  <script src="./app.js?v=1017"></script>
 </body>
 </html>
