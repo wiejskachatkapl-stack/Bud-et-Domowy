@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#172b46" />
+  <meta name="theme-color" content="#162c49" />
   <meta name="description" content="Budżet domowy – Dom przy Wiśniowa 9" />
   <title>Budżet domowy – Dom przy Wiśniowa 9</title>
   <link rel="manifest" href="./manifest.webmanifest" />
@@ -14,32 +14,29 @@
 <body>
   <main class="app-shell" id="app">
     <section class="home-screen" id="homeScreen" aria-label="Ekran główny">
-      <div class="home-stage" aria-hidden="true"></div>
-
       <nav class="main-actions" aria-label="Menu główne">
         <button class="menu-btn" data-view="expenses" aria-label="Wydatki">
-          <span class="menu-btn__icon">💼</span>
-          <span class="menu-btn__label">Wydatki</span>
-          <span class="menu-btn__arrow">›</span>
+          <span class="menu-icon" aria-hidden="true">▣</span>
+          <span class="menu-label">Wydatki</span>
+          <span class="menu-arrow" aria-hidden="true">›</span>
         </button>
         <button class="menu-btn" data-view="history" aria-label="Historia">
-          <span class="menu-btn__icon">🕘</span>
-          <span class="menu-btn__label">Historia</span>
-          <span class="menu-btn__arrow">›</span>
+          <span class="menu-icon" aria-hidden="true">◷</span>
+          <span class="menu-label">Historia</span>
+          <span class="menu-arrow" aria-hidden="true">›</span>
         </button>
         <button class="menu-btn" data-view="reports" aria-label="Raporty">
-          <span class="menu-btn__icon">📊</span>
-          <span class="menu-btn__label">Raporty</span>
-          <span class="menu-btn__arrow">›</span>
+          <span class="menu-icon" aria-hidden="true">▥</span>
+          <span class="menu-label">Raporty</span>
+          <span class="menu-arrow" aria-hidden="true">›</span>
         </button>
         <button class="menu-btn exit" id="exitBtn" aria-label="Koniec">
-          <span class="menu-btn__icon">⏻</span>
-          <span class="menu-btn__label">Koniec</span>
-          <span class="menu-btn__arrow">›</span>
+          <span class="menu-icon" aria-hidden="true">⏻</span>
+          <span class="menu-label">Koniec</span>
+          <span class="menu-arrow" aria-hidden="true">›</span>
         </button>
       </nav>
-
-      <div class="version">v1004</div>
+      <div class="version">v1005</div>
     </section>
 
     <section class="content-screen" id="contentScreen" hidden>
@@ -120,7 +117,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </main>
-
   <script src="./app.js"></script>
 </body>
 </html>

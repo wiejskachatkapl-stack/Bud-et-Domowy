@@ -1,7 +1,7 @@
-const CACHE = 'budzet-domowy-v1004';
+const CACHE = 'budzet-domowy-v1005';
 const APP_SHELL = [
   './', './index.html', './styles.css', './app.js', './manifest.webmanifest',
-  './assets/icons/icon-192.png', './assets/icons/icon-512.png', './assets/images/home_v1003.png'
+  './assets/icons/icon-192.png', './assets/icons/icon-512.png', './assets/images/home_clean_v1005.png'
 ];
 
 self.addEventListener('install', event => {
@@ -10,9 +10,7 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
-  );
+  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))));
   self.clients.claim();
 });
 
