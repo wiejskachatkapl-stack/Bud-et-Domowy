@@ -174,6 +174,43 @@ async function getGalleryPhotos() {
   });
 }
 
+
+async function deleteGalleryPhoto(id) {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction('galleryPhotos', 'readwrite');
+    const store = transaction.objectStore('galleryPhotos');
+    const request = store.delete(id);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+    transaction.oncomplete = () => db.close();
+  });
+}
+
+async function deleteGalleryFolder(date) {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction('galleryPhotos', 'readwrite');
+    const store = transaction.objectStore('galleryPhotos');
+    const index = store.index('date');
+    const request = index.openCursor(IDBKeyRange.only(date));
+
+    request.onsuccess = () => {
+      const cursor = request.result;
+      if (cursor) {
+        cursor.delete();
+        cursor.continue();
+      }
+    };
+    request.onerror = () => reject(request.error);
+    transaction.oncomplete = () => {
+      db.close();
+      resolve();
+    };
+    transaction.onerror = () => reject(transaction.error);
+  });
+}
+
 function formatFolderDate(dateStr) {
   const [y, m, d] = dateStr.split('-').map(Number);
   const date = new Date(y, m - 1, d);
@@ -183,15 +220,21 @@ function formatFolderDate(dateStr) {
 }
 
 function createPhotoThumb(photo) {
+  const item = document.createElement('div');
+  item.className = 'gallery-thumb-item';
+
   const wrapper = document.createElement('button');
   wrapper.type = 'button';
   wrapper.className = 'gallery-thumb';
+  wrapper.setAttribute('aria-label', `Otwórz zdjęcie ${photo.name || ''}`.trim());
+
   const img = document.createElement('img');
   const url = URL.createObjectURL(photo.file);
   img.src = url;
   img.alt = photo.name || 'Zdjęcie';
   img.onload = () => URL.revokeObjectURL(url);
   wrapper.appendChild(img);
+
   wrapper.addEventListener('click', () => {
     const fullUrl = URL.createObjectURL(photo.file);
     const overlay = document.createElement('div');
@@ -209,7 +252,28 @@ function createPhotoThumb(photo) {
     overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
     document.body.appendChild(overlay);
   });
-  return wrapper;
+
+  const deleteBtn = document.createElement('button');
+  deleteBtn.type = 'button';
+  deleteBtn.className = 'gallery-photo-delete';
+  deleteBtn.textContent = 'Usuń';
+  deleteBtn.setAttribute('aria-label', `Usuń zdjęcie ${photo.name || ''}`.trim());
+  deleteBtn.addEventListener('click', async event => {
+    event.stopPropagation();
+    if (!window.confirm('Usunąć to zdjęcie z galerii?')) return;
+    try {
+      await deleteGalleryPhoto(photo.id);
+      await renderGallery();
+      showToast('Zdjęcie zostało usunięte.');
+    } catch (error) {
+      console.error(error);
+      showToast('Nie udało się usunąć zdjęcia.');
+    }
+  });
+
+  item.appendChild(wrapper);
+  item.appendChild(deleteBtn);
+  return item;
 }
 
 async function renderGallery() {
@@ -226,23 +290,52 @@ async function renderGallery() {
 
     Object.keys(groups).sort().reverse().forEach(date => {
       const folder = document.createElement('section');
-      folder.className = 'gallery-folder';
+      folder.className = 'gallery-folder open';
 
-      const head = document.createElement('button');
-      head.type = 'button';
+      const head = document.createElement('div');
       head.className = 'gallery-folder-head';
-      head.innerHTML = `<span class="folder-icon">📁</span><span><strong>${formatFolderDate(date)}</strong><small>${groups[date].length} ${groups[date].length === 1 ? 'zdjęcie' : 'zdjęcia'}</small></span><span class="folder-arrow">⌄</span>`;
+
+      const toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.className = 'gallery-folder-toggle';
+      toggle.innerHTML = `<span class="folder-icon">📁</span><span><strong>${formatFolderDate(date)}</strong><small>${groups[date].length} ${groups[date].length === 1 ? 'zdjęcie' : 'zdjęcia'}</small></span><span class="folder-arrow">⌄</span>`;
+
+      const deleteFolderBtn = document.createElement('button');
+      deleteFolderBtn.type = 'button';
+      deleteFolderBtn.className = 'gallery-folder-delete';
+      deleteFolderBtn.textContent = 'Usuń katalog';
+      deleteFolderBtn.setAttribute('aria-label', `Usuń katalog ${formatFolderDate(date)}`);
 
       const grid = document.createElement('div');
       grid.className = 'gallery-photo-grid';
-      groups[date].sort((a,b) => (b.createdAt || '').localeCompare(a.createdAt || '')).forEach(photo => grid.appendChild(createPhotoThumb(photo)));
+      groups[date]
+        .sort((a,b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
+        .forEach(photo => grid.appendChild(createPhotoThumb(photo)));
 
-      head.addEventListener('click', () => {
+      toggle.addEventListener('click', () => {
         const isClosed = grid.hidden;
         grid.hidden = !isClosed;
         folder.classList.toggle('open', isClosed);
       });
 
+      deleteFolderBtn.addEventListener('click', async () => {
+        const count = groups[date].length;
+        const message = count === 1
+          ? `Usunąć katalog z dnia ${formatFolderDate(date)} razem z 1 zdjęciem?`
+          : `Usunąć katalog z dnia ${formatFolderDate(date)} razem ze wszystkimi ${count} zdjęciami?`;
+        if (!window.confirm(message)) return;
+        try {
+          await deleteGalleryFolder(date);
+          await renderGallery();
+          showToast('Katalog został usunięty.');
+        } catch (error) {
+          console.error(error);
+          showToast('Nie udało się usunąć katalogu.');
+        }
+      });
+
+      head.appendChild(toggle);
+      head.appendChild(deleteFolderBtn);
       folder.appendChild(head);
       folder.appendChild(grid);
       galleryFolders.appendChild(folder);
