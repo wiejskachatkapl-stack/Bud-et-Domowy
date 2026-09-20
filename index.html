@@ -14,14 +14,32 @@
 <body>
   <main class="app-shell" id="app">
     <section class="home-screen" id="homeScreen" aria-label="Ekran główny">
+      <div class="home-stage" aria-hidden="true"></div>
+
       <nav class="main-actions" aria-label="Menu główne">
-        <button class="menu-btn" data-view="expenses" aria-label="Wydatki"><span class="sr-only">Wydatki</span></button>
-        <button class="menu-btn" data-view="history" aria-label="Historia"><span class="sr-only">Historia</span></button>
-        <button class="menu-btn" data-view="reports" aria-label="Raporty"><span class="sr-only">Raporty</span></button>
-        <button class="menu-btn" id="exitBtn" aria-label="Koniec"><span class="sr-only">Koniec</span></button>
+        <button class="menu-btn" data-view="expenses" aria-label="Wydatki">
+          <span class="menu-btn__icon">💼</span>
+          <span class="menu-btn__label">Wydatki</span>
+          <span class="menu-btn__arrow">›</span>
+        </button>
+        <button class="menu-btn" data-view="history" aria-label="Historia">
+          <span class="menu-btn__icon">🕘</span>
+          <span class="menu-btn__label">Historia</span>
+          <span class="menu-btn__arrow">›</span>
+        </button>
+        <button class="menu-btn" data-view="reports" aria-label="Raporty">
+          <span class="menu-btn__icon">📊</span>
+          <span class="menu-btn__label">Raporty</span>
+          <span class="menu-btn__arrow">›</span>
+        </button>
+        <button class="menu-btn exit" id="exitBtn" aria-label="Koniec">
+          <span class="menu-btn__icon">⏻</span>
+          <span class="menu-btn__label">Koniec</span>
+          <span class="menu-btn__arrow">›</span>
+        </button>
       </nav>
 
-      <div class="version">v1003</div>
+      <div class="version">v1004</div>
     </section>
 
     <section class="content-screen" id="contentScreen" hidden>
