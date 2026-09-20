@@ -13,7 +13,7 @@ button,input,select{font:inherit}
 button{-webkit-tap-highlight-color:transparent}
 .app-shell{width:100%;min-height:100svh;position:relative;overflow:hidden}
 
-/* ===== EKRAN STARTOWY v1011 =====
+/* ===== EKRAN STARTOWY v1012 =====
    Osobne pełnoekranowe tło dla komputera i telefonu.
    Przyciski są niezależnymi elementami HTML/CSS. */
 .home-screen{
@@ -22,7 +22,7 @@ button{-webkit-tap-highlight-color:transparent}
   height:100svh;
   min-height:100svh;
   overflow:hidden;
-  background-image:url('./assets/images/home_desktop_v1011.png');
+  background-image:url('./assets/images/home_desktop_v1012.png');
   background-size:cover;
   background-repeat:no-repeat;
   background-position:center center;
