@@ -32,10 +32,13 @@ const historyTotal = document.getElementById('historyTotal');
 const historyCount = document.getElementById('historyCount');
 const reportsCard = document.getElementById('reportsCard');
 const reportTotal = document.getElementById('reportTotal');
-const reportCount = document.getElementById('reportCount');
-const reportAverage = document.getElementById('reportAverage');
 const reportCategories = document.getElementById('reportCategories');
 const reportMonths = document.getElementById('reportMonths');
+const reportMonthDetails = document.getElementById('reportMonthDetails');
+const reportMonthTitle = document.getElementById('reportMonthTitle');
+const reportMonthTotal = document.getElementById('reportMonthTotal');
+const reportMonthExpenses = document.getElementById('reportMonthExpenses');
+const reportMonthClose = document.getElementById('reportMonthClose');
 
 let selectedReceipt = null;
 let previewUrl = '';
@@ -44,6 +47,7 @@ let suppressGalleryClick = false;
 let editingExpenseId = null;
 let editingExpenseCreatedAt = null;
 let editingExpenseReceipt = null;
+let reportExpensesCache = [];
 
 const viewCopy = {};
 
@@ -143,6 +147,7 @@ function openView(key) {
     historyCard.hidden = true;
     placeholderCard.hidden = true;
     reportsCard.hidden = false;
+    if (reportMonthDetails) reportMonthDetails.hidden = true;
     renderReports();
     return;
   }
@@ -352,13 +357,62 @@ function renderReportBars(container, entries, total, formatter = v => v) {
   });
 }
 
+function formatReportMonthLabel(label) {
+  if (label === 'Brak daty') return label;
+  const [y,m] = label.split('-').map(Number);
+  return new Intl.DateTimeFormat('pl-PL', { month:'long', year:'numeric' }).format(new Date(y,m-1,1));
+}
+
+function renderMonthExpenses(monthKey) {
+  const items = reportExpensesCache
+    .filter(item => (((item.date || '').slice(0,7) || 'Brak daty') === monthKey))
+    .sort((a,b) => ((b.date || '') + (b.createdAt || '')).localeCompare((a.date || '') + (a.createdAt || '')));
+
+  const total = items.reduce((sum,item) => sum + (Number(item.amount) || 0), 0);
+  reportMonthTitle.textContent = formatReportMonthLabel(monthKey);
+  reportMonthTotal.textContent = formatMoney(total);
+  reportMonthExpenses.innerHTML = '';
+
+  if (!items.length) {
+    reportMonthExpenses.innerHTML = '<div class="report-empty">Brak wydatków w tym miesiącu.</div>';
+  } else {
+    items.forEach(item => {
+      const row = document.createElement('article');
+      row.className = 'report-month-expense';
+      const note = (item.notes || '').trim();
+      row.innerHTML = `<div class="report-month-expense-main"><strong>${escapeHtml(item.category || 'Bez kategorii')}</strong><span>${formatExpenseDate(item.date)}</span>${note ? `<p>${escapeHtml(note)}</p>` : ''}</div><div class="report-month-expense-amount">${formatMoney(item.amount)}</div>`;
+      reportMonthExpenses.appendChild(row);
+    });
+  }
+
+  reportMonthDetails.hidden = false;
+  reportMonthDetails.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function renderReportMonths(entries, total) {
+  reportMonths.innerHTML = '';
+  if (!entries.length) {
+    reportMonths.innerHTML = '<div class="report-empty">Brak danych do raportu.</div>';
+    return;
+  }
+
+  entries.forEach(([label,value]) => {
+    const percent = total > 0 ? Math.max(2, (value / total) * 100) : 0;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'report-bar-row report-month-row';
+    button.innerHTML = `<div class="report-bar-label"><span>${escapeHtml(formatReportMonthLabel(label))}</span><strong>${formatMoney(value)}</strong></div><div class="report-bar-track"><span style="width:${percent}%"></span></div><div class="report-month-open">Zobacz wydatki ›</div>`;
+    button.addEventListener('click', () => renderMonthExpenses(label));
+    reportMonths.appendChild(button);
+  });
+}
+
 async function renderReports() {
   try {
     const expenses = await getExpenses();
+    reportExpensesCache = expenses;
     const total = expenses.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
     reportTotal.textContent = formatMoney(total);
-    reportCount.textContent = String(expenses.length);
-    reportAverage.textContent = formatMoney(expenses.length ? total / expenses.length : 0);
     const categories = {}; const months = {};
     for (const item of expenses) {
       const amount = Number(item.amount) || 0;
@@ -368,11 +422,7 @@ async function renderReports() {
     const categoryEntries = Object.entries(categories).sort((a,b)=>b[1]-a[1]);
     const monthEntries = Object.entries(months).sort((a,b)=>b[0].localeCompare(a[0]));
     renderReportBars(reportCategories, categoryEntries, total);
-    renderReportBars(reportMonths, monthEntries, total, label => {
-      if (label === 'Brak daty') return label;
-      const [y,m] = label.split('-').map(Number);
-      return new Intl.DateTimeFormat('pl-PL',{month:'long',year:'numeric'}).format(new Date(y,m-1,1));
-    });
+    renderReportMonths(monthEntries, total);
   } catch (error) { console.error(error); showToast('Nie udało się przygotować raportów.'); }
 }
 
@@ -743,6 +793,13 @@ expenseForm.addEventListener('submit', async event => {
   }
 });
 
+if (reportMonthClose) {
+  reportMonthClose.addEventListener('click', () => {
+    reportMonthDetails.hidden = true;
+    document.querySelector('.reports-card')?.scrollIntoView({ behavior:'smooth', block:'start' });
+  });
+}
+
 document.querySelectorAll('[data-view]').forEach(btn => {
   btn.addEventListener('click', () => openView(btn.dataset.view));
 });
@@ -779,7 +836,7 @@ galleryDateInput.value = todayISO();
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=1018');
+      const registration = await navigator.serviceWorker.register('./sw.js?v=1019');
       await registration.update();
 
       let refreshing = false;

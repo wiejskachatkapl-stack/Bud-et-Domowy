@@ -9,7 +9,7 @@
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" type="image/png" sizes="192x192" href="./assets/icons/icon-192.png" />
   <link rel="apple-touch-icon" href="./assets/icons/icon-192.png" />
-  <link rel="stylesheet" href="./styles.css?v=1018" />
+  <link rel="stylesheet" href="./styles.css?v=1019" />
 </head>
 <body>
   <main class="app-shell" id="app">
@@ -41,7 +41,7 @@
           <span class="menu-arrow" aria-hidden="true">›</span>
         </button>
       </nav>
-      <div class="version">v1018</div>
+      <div class="version">v1019</div>
     </section>
 
     <section class="content-screen" id="contentScreen" hidden>
@@ -129,9 +129,7 @@
 
       <section class="reports-card" id="reportsCard" hidden>
         <div class="report-overview">
-          <div class="report-stat"><span>Łączne wydatki</span><strong id="reportTotal">0,00 zł</strong></div>
-          <div class="report-stat"><span>Liczba wydatków</span><strong id="reportCount">0</strong></div>
-          <div class="report-stat"><span>Średni wydatek</span><strong id="reportAverage">0,00 zł</strong></div>
+          <div class="report-stat report-stat-total"><span>Łączne wydatki</span><strong id="reportTotal">0,00 zł</strong></div>
         </div>
         <div class="report-section">
           <h3>Według kategorii</h3>
@@ -139,8 +137,21 @@
         </div>
         <div class="report-section">
           <h3>Według miesięcy</h3>
-          <div id="reportMonths" class="report-bars"></div>
+          <p class="report-month-hint">Kliknij miesiąc, aby zobaczyć wydatki z tego okresu.</p>
+          <div id="reportMonths" class="report-bars report-months"></div>
         </div>
+
+        <section class="report-month-details" id="reportMonthDetails" hidden>
+          <div class="report-month-details-head">
+            <div>
+              <span>Wydatki w miesiącu</span>
+              <h3 id="reportMonthTitle"></h3>
+            </div>
+            <div class="report-month-details-total" id="reportMonthTotal">0,00 zł</div>
+          </div>
+          <div class="report-month-expenses" id="reportMonthExpenses"></div>
+          <button type="button" class="report-month-close" id="reportMonthClose">Zamknij</button>
+        </section>
       </section>
 
       <section class="gallery-card" id="galleryCard" hidden>
@@ -182,6 +193,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </main>
-  <script src="./app.js?v=1018"></script>
+  <script src="./app.js?v=1019"></script>
 </body>
 </html>

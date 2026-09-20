@@ -259,7 +259,7 @@ button{-webkit-tap-highlight-color:transparent}
 .history-category{font-size:17px;font-weight:800}.history-date{margin-top:3px;color:rgba(255,255,255,.56);font-size:12px}.history-note{margin-top:8px;color:rgba(255,255,255,.78);font-size:14px;line-height:1.4;white-space:pre-wrap}
 .history-side{text-align:right;display:grid;justify-items:end;gap:7px}.history-side>strong{font-size:20px;white-space:nowrap}.history-receipt-btn{border:1px solid rgba(255,255,255,.13);border-radius:10px;background:rgba(31,75,119,.72);color:#fff;padding:7px 10px;cursor:pointer;font-size:12px;font-weight:750}.history-receipt-btn:hover{filter:brightness(1.08)}
 .history-empty{padding:42px 20px;text-align:center;border:1px dashed rgba(255,255,255,.18);border-radius:18px;color:rgba(255,255,255,.68)}.history-empty span{display:block;font-size:42px}.history-empty strong{display:block;color:#fff;margin-top:7px}.history-empty small{display:block;margin-top:5px}
-.report-overview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:18px}.report-section{padding:18px;border-radius:18px;background:rgba(7,18,31,.35);border:1px solid rgba(255,255,255,.09);margin-top:12px}.report-section h3{margin:0 0 15px;font-size:18px}.report-bars{display:grid;gap:13px}.report-bar-label{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin-bottom:6px}.report-bar-label span{font-size:14px;font-weight:700}.report-bar-label strong{font-size:14px;white-space:nowrap}.report-bar-track{height:9px;border-radius:999px;background:rgba(255,255,255,.09);overflow:hidden}.report-bar-track span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#2f6da5,#78a7d4)}.report-empty{padding:22px;text-align:center;color:rgba(255,255,255,.56)}
+.report-overview{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin-bottom:18px}.report-stat-total{max-width:420px}.report-section{padding:18px;border-radius:18px;background:rgba(7,18,31,.35);border:1px solid rgba(255,255,255,.09);margin-top:12px}.report-section h3{margin:0 0 15px;font-size:18px}.report-bars{display:grid;gap:13px}.report-bar-label{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin-bottom:6px}.report-bar-label span{font-size:14px;font-weight:700}.report-bar-label strong{font-size:14px;white-space:nowrap}.report-bar-track{height:9px;border-radius:999px;background:rgba(255,255,255,.09);overflow:hidden}.report-bar-track span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#2f6da5,#78a7d4)}.report-empty{padding:22px;text-align:center;color:rgba(255,255,255,.56)}
 @media(max-width:700px){.history-card,.reports-card{width:100%;padding:15px 12px;border-radius:22px}.history-summary{grid-template-columns:1fr 1fr}.history-item{grid-template-columns:1fr;gap:9px}.history-side{text-align:left;justify-items:start;grid-template-columns:auto auto;align-items:center}.report-overview{grid-template-columns:1fr}.report-section{padding:14px}.report-bar-label{gap:8px}.report-bar-label span{font-size:13px}.report-bar-label strong{font-size:13px}}
 
 /* ===== EDYCJA I USUWANIE WYDATKÓW v1018 ===== */
@@ -269,3 +269,21 @@ button{-webkit-tap-highlight-color:transparent}
 .history-delete-btn{background:linear-gradient(145deg,rgba(126,39,44,.94),rgba(83,24,29,.96))}
 .history-edit-btn:hover,.history-delete-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
 @media(max-width:700px){.history-actions{justify-content:flex-start}.history-side{grid-template-columns:1fr;justify-items:start}.history-side>strong{margin-bottom:2px}}
+
+
+/* ===== Raporty v1019: klikane miesiące i szczegóły miesiąca ===== */
+.report-month-hint{margin:-7px 0 14px;color:rgba(255,255,255,.55);font-size:12px}
+.report-month-row{width:100%;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px 13px;background:rgba(255,255,255,.025);color:#fff;text-align:left;cursor:pointer;transition:background .15s ease,transform .15s ease,border-color .15s ease}
+.report-month-row:hover{background:rgba(44,91,137,.18);border-color:rgba(125,179,229,.28);transform:translateY(-1px)}
+.report-month-open{margin-top:7px;text-align:right;color:rgba(183,216,246,.86);font-size:11px;font-weight:750}
+.report-month-details{margin-top:18px;padding:18px;border-radius:18px;background:rgba(8,22,38,.62);border:1px solid rgba(255,255,255,.12)}
+.report-month-details-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding-bottom:13px;border-bottom:1px solid rgba(255,255,255,.10)}
+.report-month-details-head span{display:block;color:rgba(255,255,255,.52);font-size:11px;font-weight:750;text-transform:uppercase;letter-spacing:.05em}
+.report-month-details-head h3{margin:3px 0 0;font-size:22px;text-transform:capitalize}
+.report-month-details-total{font-size:22px;font-weight:850;white-space:nowrap}
+.report-month-expenses{display:grid;gap:9px;margin-top:13px}
+.report-month-expense{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:15px;padding:13px 14px;border-radius:14px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08)}
+.report-month-expense-main strong{display:block;font-size:15px}.report-month-expense-main span{display:block;margin-top:2px;color:rgba(255,255,255,.52);font-size:11px}.report-month-expense-main p{margin:7px 0 0;color:rgba(255,255,255,.74);font-size:13px;line-height:1.35;white-space:pre-wrap}.report-month-expense-amount{font-size:17px;font-weight:850;white-space:nowrap}
+.report-month-close{display:block;margin:15px auto 0;min-width:130px;border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:9px 16px;background:rgba(31,70,108,.72);color:#fff;font-weight:750;cursor:pointer}
+.report-month-close:hover{filter:brightness(1.08)}
+@media(max-width:700px){.report-stat-total{max-width:none}.report-month-details{padding:14px 11px}.report-month-details-head{align-items:flex-start;flex-direction:column;gap:7px}.report-month-expense{grid-template-columns:1fr;gap:7px}.report-month-expense-amount{font-size:16px}.report-month-row{padding:11px}}
