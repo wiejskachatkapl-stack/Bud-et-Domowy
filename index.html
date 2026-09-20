@@ -14,36 +14,14 @@
 <body>
   <main class="app-shell" id="app">
     <section class="home-screen" id="homeScreen" aria-label="Ekran główny">
-      <div class="photo-grid" aria-hidden="true">
-        <div class="photo photo-exterior"></div>
-        <div class="photo photo-interior"></div>
-        <div class="photo-overlay"></div>
-      </div>
-
-      <div class="brand-panel">
-        <div class="brand-icon" aria-hidden="true">⌂</div>
-        <div>
-          <h1>Budżet domowy</h1>
-          <p>Dom przy Wiśniowa 9</p>
-        </div>
-      </div>
-
       <nav class="main-actions" aria-label="Menu główne">
-        <button class="menu-btn primary" data-view="expenses">
-          <span class="menu-emoji">💳</span><span>Wydatki</span>
-        </button>
-        <button class="menu-btn primary" data-view="history">
-          <span class="menu-emoji">🕘</span><span>Historia</span>
-        </button>
-        <button class="menu-btn primary" data-view="reports">
-          <span class="menu-emoji">📊</span><span>Raporty</span>
-        </button>
-        <button class="menu-btn exit" id="exitBtn">
-          <span class="menu-emoji">⏻</span><span>Koniec</span>
-        </button>
+        <button class="menu-btn" data-view="expenses" aria-label="Wydatki"><span class="sr-only">Wydatki</span></button>
+        <button class="menu-btn" data-view="history" aria-label="Historia"><span class="sr-only">Historia</span></button>
+        <button class="menu-btn" data-view="reports" aria-label="Raporty"><span class="sr-only">Raporty</span></button>
+        <button class="menu-btn" id="exitBtn" aria-label="Koniec"><span class="sr-only">Koniec</span></button>
       </nav>
 
-      <div class="version">v1002</div>
+      <div class="version">v1003</div>
     </section>
 
     <section class="content-screen" id="contentScreen" hidden>

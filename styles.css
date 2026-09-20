@@ -117,3 +117,103 @@ button { -webkit-tap-highlight-color: transparent; }
   .expense-card { padding: 18px 15px; }
   .form-actions { gap: 10px; }
 }
+
+/* ===== v1003: ekran startowy oparty na zaakceptowanej grafice 9:16 ===== */
+.home-screen {
+  min-height: 100svh;
+  height: 100svh;
+  padding: 0;
+  display: block;
+  overflow: hidden;
+  background-image: url('./assets/images/home_v1003.png');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+/* Poprzedni kolaż i panel tytułu nie są już używane na ekranie startowym. */
+.home-screen .photo-grid,
+.home-screen .brand-panel { display: none !important; }
+
+/*
+  Przyciski pozostają prawdziwymi elementami aplikacji.
+  Ich obszary dotykowe są ustawione dokładnie na smukłych przyciskach
+  narysowanych w zaakceptowanej grafice.
+*/
+.main-actions {
+  position: absolute;
+  left: 50%;
+  top: 59.55%;
+  transform: translateX(-50%);
+  width: 54.7%;
+  height: 25.2%;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: repeat(4, 1fr);
+  gap: 1.75%;
+  margin: 0;
+  z-index: 3;
+}
+
+.menu-btn {
+  width: 100%;
+  min-height: 0;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
+  color: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color .14s ease, transform .14s ease;
+}
+
+.menu-btn:hover,
+.menu-btn:active {
+  filter: none;
+  box-shadow: none;
+}
+
+.menu-btn:hover { background: rgba(255,255,255,.045); }
+.menu-btn:active { transform: scale(.985); background: rgba(255,255,255,.085); }
+.menu-btn:focus-visible { outline: 3px solid rgba(255,255,255,.8); outline-offset: 2px; }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.version {
+  position: absolute;
+  left: max(8px, env(safe-area-inset-left));
+  bottom: max(7px, env(safe-area-inset-bottom));
+  z-index: 4;
+  padding: 3px 7px;
+  border-radius: 8px;
+  font-size: 10px;
+  color: rgba(255,255,255,.72);
+  background: rgba(0,0,0,.24);
+  backdrop-filter: blur(4px);
+}
+
+/* Telefon pionowo – priorytet dla tej wersji. */
+@media (max-width: 600px) and (orientation: portrait) {
+  body { overflow: hidden; }
+  .home-screen { width: 100vw; height: 100svh; min-height: 100svh; }
+}
+
+/* Na bardzo wysokich telefonach obraz nadal wypełnia ekran bez białych pasów. */
+@media (max-aspect-ratio: 1/2) and (orientation: portrait) {
+  .home-screen { background-size: cover; background-position: center center; }
+}
