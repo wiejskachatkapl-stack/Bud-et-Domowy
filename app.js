@@ -16,6 +16,7 @@ const receiptImage = document.getElementById('receiptImage');
 const receiptName = document.getElementById('receiptName');
 const removeReceiptBtn = document.getElementById('removeReceiptBtn');
 const cancelExpenseBtn = document.getElementById('cancelExpenseBtn');
+const saveExpenseBtn = document.getElementById('saveExpenseBtn');
 const backBtn = document.getElementById('backBtn');
 const exitBtn = document.getElementById('exitBtn');
 const toast = document.getElementById('toast');
@@ -40,6 +41,9 @@ let selectedReceipt = null;
 let previewUrl = '';
 let activeGalleryDate = null;
 let suppressGalleryClick = false;
+let editingExpenseId = null;
+let editingExpenseCreatedAt = null;
+let editingExpenseReceipt = null;
 
 const viewCopy = {};
 
@@ -72,6 +76,10 @@ function resetExpenseForm() {
   expenseForm.reset();
   dateInput.value = todayISO();
   resetReceipt();
+  editingExpenseId = null;
+  editingExpenseCreatedAt = null;
+  editingExpenseReceipt = null;
+  if (saveExpenseBtn) saveExpenseBtn.textContent = 'Dodaj';
 }
 
 function openHome() {
@@ -179,12 +187,56 @@ async function saveExpense(expense) {
   return new Promise((resolve, reject) => {
     const transaction = db.transaction('expenses', 'readwrite');
     const store = transaction.objectStore('expenses');
-    const request = store.add(expense);
+    const request = expense.id ? store.put(expense) : store.add(expense);
 
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
     transaction.oncomplete = () => db.close();
   });
+}
+
+async function deleteExpense(id) {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction('expenses', 'readwrite');
+    const store = transaction.objectStore('expenses');
+    const request = store.delete(id);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+    transaction.oncomplete = () => db.close();
+  });
+}
+
+function startExpenseEdit(item) {
+  editingExpenseId = item.id;
+  editingExpenseCreatedAt = item.createdAt || new Date().toISOString();
+  editingExpenseReceipt = item.receipt || null;
+
+  homeScreen.hidden = true;
+  contentScreen.hidden = false;
+  placeholderCard.hidden = true;
+  galleryCard.hidden = true;
+  historyCard.hidden = true;
+  reportsCard.hidden = true;
+  expenseForm.hidden = false;
+  contentTitle.textContent = 'Edytuj wydatek';
+  contentSubtitle.textContent = 'Zmień dane i zapisz';
+
+  amountInput.value = item.amount ?? '';
+  categoryInput.value = item.category || '';
+  dateInput.value = item.date || todayISO();
+  notesInput.value = item.notes || '';
+  resetReceipt();
+  editingExpenseReceipt = item.receipt || null;
+  if (item.receipt) {
+    selectedReceipt = item.receipt;
+    previewUrl = URL.createObjectURL(item.receipt);
+    receiptImage.src = previewUrl;
+    receiptName.textContent = 'Zapisany paragon';
+    receiptPreview.hidden = false;
+  }
+  if (saveExpenseBtn) saveExpenseBtn.textContent = 'Zapisz zmiany';
+  window.setTimeout(() => amountInput.focus(), 80);
 }
 
 async function getExpenses() {
@@ -239,13 +291,43 @@ async function renderHistory() {
       const row = document.createElement('article');
       row.className = 'history-item';
       const note = (item.notes || '').trim();
-      row.innerHTML = `<div class="history-main"><div class="history-category">${escapeHtml(item.category || 'Bez kategorii')}</div><div class="history-date">${formatExpenseDate(item.date)}</div>${note ? `<div class="history-note">${escapeHtml(note)}</div>` : ''}</div><div class="history-side"><strong>${formatMoney(item.amount)}</strong></div>`;
+      row.innerHTML = `<div class="history-main"><div class="history-category">${escapeHtml(item.category || 'Bez kategorii')}</div><div class="history-date">${formatExpenseDate(item.date)}</div>${note ? `<div class="history-note">${escapeHtml(note)}</div>` : ''}</div><div class="history-side"><strong>${formatMoney(item.amount)}</strong><div class="history-actions"></div></div>`;
+
+      const actions = row.querySelector('.history-actions');
       if (item.receipt) {
         const receiptBtn = document.createElement('button');
-        receiptBtn.type='button'; receiptBtn.className='history-receipt-btn'; receiptBtn.textContent='📷 Paragon';
+        receiptBtn.type='button';
+        receiptBtn.className='history-receipt-btn';
+        receiptBtn.textContent='📷 Paragon';
         receiptBtn.addEventListener('click', () => openImageBlob(item.receipt, `Paragon – ${item.category || ''}`));
-        row.querySelector('.history-side').appendChild(receiptBtn);
+        actions.appendChild(receiptBtn);
       }
+
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'history-edit-btn';
+      editBtn.textContent = 'Edytuj';
+      editBtn.addEventListener('click', () => startExpenseEdit(item));
+      actions.appendChild(editBtn);
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.type = 'button';
+      deleteBtn.className = 'history-delete-btn';
+      deleteBtn.textContent = 'Usuń';
+      deleteBtn.addEventListener('click', async () => {
+        const label = item.category || 'ten wydatek';
+        if (!window.confirm(`Usunąć wpis „${label}” z dnia ${formatExpenseDate(item.date)}?`)) return;
+        try {
+          await deleteExpense(item.id);
+          await renderHistory();
+          showToast('Wydatek został usunięty.');
+        } catch (error) {
+          console.error(error);
+          showToast('Nie udało się usunąć wydatku.');
+        }
+      });
+      actions.appendChild(deleteBtn);
+
       historyList.appendChild(row);
     });
   } catch (error) { console.error(error); showToast('Nie udało się wczytać historii.'); }
@@ -634,22 +716,30 @@ expenseForm.addEventListener('submit', async event => {
     return;
   }
 
+  const isEditing = editingExpenseId !== null;
   const expense = {
     amount: Math.round(amount * 100) / 100,
     category: categoryInput.value,
     date: dateInput.value,
     notes: notesInput.value.trim(),
     receipt: selectedReceipt || null,
-    createdAt: new Date().toISOString()
+    createdAt: isEditing ? (editingExpenseCreatedAt || new Date().toISOString()) : new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   };
+  if (isEditing) expense.id = editingExpenseId;
 
   try {
     await saveExpense(expense);
     resetExpenseForm();
-    showToast('Wydatek został zapisany.');
+    if (isEditing) {
+      showToast('Zmiany zostały zapisane.');
+      openView('history');
+    } else {
+      showToast('Wydatek został zapisany.');
+    }
   } catch (error) {
     console.error(error);
-    showToast('Nie udało się zapisać wydatku.');
+    showToast(isEditing ? 'Nie udało się zapisać zmian.' : 'Nie udało się zapisać wydatku.');
   }
 });
 
@@ -663,12 +753,19 @@ backBtn.addEventListener('click', async () => {
     await renderGallery();
     return;
   }
+  if (editingExpenseId !== null) {
+    resetExpenseForm();
+    openView('history');
+    return;
+  }
   openHome();
 });
 
 cancelExpenseBtn.addEventListener('click', () => {
+  const wasEditing = editingExpenseId !== null;
   resetExpenseForm();
-  openHome();
+  if (wasEditing) openView('history');
+  else openHome();
 });
 
 exitBtn.addEventListener('click', () => {
@@ -682,7 +779,7 @@ galleryDateInput.value = todayISO();
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=1017');
+      const registration = await navigator.serviceWorker.register('./sw.js?v=1018');
       await registration.update();
 
       let refreshing = false;

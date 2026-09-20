@@ -1,6 +1,6 @@
-const CACHE = 'budzet-domowy-v1017';
+const CACHE = 'budzet-domowy-v1018';
 const APP_SHELL = [
-  './', './index.html', './styles.css?v=1016', './app.js?v=1016', './manifest.webmanifest',
+  './', './index.html', './styles.css?v=1018', './app.js?v=1018', './manifest.webmanifest',
   './assets/icons/icon-192.png', './assets/icons/icon-512.png',
   './assets/images/home_desktop_v1012.png', './assets/images/home_mobile_v1010.png'
 ];
