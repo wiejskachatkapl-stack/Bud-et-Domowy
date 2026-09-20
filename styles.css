@@ -271,7 +271,7 @@ button{-webkit-tap-highlight-color:transparent}
 @media(max-width:700px){.history-actions{justify-content:flex-start}.history-side{grid-template-columns:1fr;justify-items:start}.history-side>strong{margin-bottom:2px}}
 
 
-/* ===== Raporty v1019: klikane miesiące i szczegóły miesiąca ===== */
+/* ===== Raporty v1020: klikane miesiące i szczegóły miesiąca ===== */
 .report-month-hint{margin:-7px 0 14px;color:rgba(255,255,255,.55);font-size:12px}
 .report-month-row{width:100%;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px 13px;background:rgba(255,255,255,.025);color:#fff;text-align:left;cursor:pointer;transition:background .15s ease,transform .15s ease,border-color .15s ease}
 .report-month-row:hover{background:rgba(44,91,137,.18);border-color:rgba(125,179,229,.28);transform:translateY(-1px)}
