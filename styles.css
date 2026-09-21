@@ -287,3 +287,15 @@ button{-webkit-tap-highlight-color:transparent}
 .report-month-close{display:block;margin:15px auto 0;min-width:130px;border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:9px 16px;background:rgba(31,70,108,.72);color:#fff;font-weight:750;cursor:pointer}
 .report-month-close:hover{filter:brightness(1.08)}
 @media(max-width:700px){.report-stat-total{max-width:none}.report-month-details{padding:14px 11px}.report-month-details-head{align-items:flex-start;flex-direction:column;gap:7px}.report-month-expense{grid-template-columns:1fr;gap:7px}.report-month-expense-amount{font-size:16px}.report-month-row{padding:11px}}
+
+/* ===== v1022: eksport PDF i ZIP ===== */
+.export-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.report-export-actions{margin:0 0 18px}
+.gallery-export-actions{margin-top:10px}
+.export-btn{min-height:44px;border:1px solid rgba(255,255,255,.16);border-radius:14px;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;gap:9px;background:linear-gradient(145deg,#214d7d,#153756);color:#fff;font-weight:800;cursor:pointer;box-shadow:0 8px 18px rgba(0,0,0,.18);transition:transform .15s ease,filter .15s ease,opacity .15s ease}
+.export-btn:hover{transform:translateY(-1px);filter:brightness(1.06)}
+.export-btn:active{transform:scale(.99)}
+.export-btn:disabled{opacity:.65;cursor:wait;transform:none}
+.export-btn span{font-size:18px;line-height:1}
+.export-btn-zip{background:linear-gradient(145deg,#2c624d,#1c4637)}
+@media(max-width:700px){.export-actions{width:100%}.export-btn{width:100%;min-height:46px}.gallery-export-actions{margin-top:4px}}

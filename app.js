@@ -39,6 +39,8 @@ const reportMonthTitle = document.getElementById('reportMonthTitle');
 const reportMonthTotal = document.getElementById('reportMonthTotal');
 const reportMonthExpenses = document.getElementById('reportMonthExpenses');
 const reportMonthClose = document.getElementById('reportMonthClose');
+const downloadReportPdfBtn = document.getElementById('downloadReportPdfBtn');
+const downloadGalleryZipBtn = document.getElementById('downloadGalleryZipBtn');
 
 let selectedReceipt = null;
 let previewUrl = '';
@@ -793,6 +795,343 @@ expenseForm.addEventListener('submit', async event => {
   }
 });
 
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+function safeFileName(name) {
+  return String(name || 'zdjecie')
+    .replace(/[\\/:*?"<>|]+/g, '_')
+    .replace(/\s+/g, ' ')
+    .trim() || 'zdjecie';
+}
+
+function concatBytes(parts) {
+  const total = parts.reduce((sum, part) => sum + part.length, 0);
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const part of parts) {
+    out.set(part, offset);
+    offset += part.length;
+  }
+  return out;
+}
+
+function le16(value) {
+  const out = new Uint8Array(2);
+  new DataView(out.buffer).setUint16(0, value, true);
+  return out;
+}
+
+function le32(value) {
+  const out = new Uint8Array(4);
+  new DataView(out.buffer).setUint32(0, value >>> 0, true);
+  return out;
+}
+
+let crcTable = null;
+function getCrcTable() {
+  if (crcTable) return crcTable;
+  crcTable = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    crcTable[n] = c >>> 0;
+  }
+  return crcTable;
+}
+
+function crc32(bytes) {
+  const table = getCrcTable();
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) crc = table[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+function dosDateTime(value) {
+  const d = value ? new Date(value) : new Date();
+  const year = Math.max(1980, d.getFullYear());
+  const time = ((d.getHours() & 31) << 11) | ((d.getMinutes() & 63) << 5) | ((Math.floor(d.getSeconds() / 2)) & 31);
+  const date = (((year - 1980) & 127) << 9) | (((d.getMonth() + 1) & 15) << 5) | (d.getDate() & 31);
+  return { time, date };
+}
+
+function buildZip(entries) {
+  const encoder = new TextEncoder();
+  const localParts = [];
+  const centralParts = [];
+  let localOffset = 0;
+
+  for (const entry of entries) {
+    const nameBytes = encoder.encode(entry.name);
+    const data = entry.data;
+    const crc = crc32(data);
+    const stamp = dosDateTime(entry.lastModified);
+    const flags = 0x0800;
+
+    const localHeader = concatBytes([
+      le32(0x04034B50), le16(20), le16(flags), le16(0), le16(stamp.time), le16(stamp.date),
+      le32(crc), le32(data.length), le32(data.length), le16(nameBytes.length), le16(0), nameBytes
+    ]);
+    localParts.push(localHeader, data);
+
+    const centralHeader = concatBytes([
+      le32(0x02014B50), le16(20), le16(20), le16(flags), le16(0), le16(stamp.time), le16(stamp.date),
+      le32(crc), le32(data.length), le32(data.length), le16(nameBytes.length), le16(0), le16(0),
+      le16(0), le16(0), le32(0), le32(localOffset), nameBytes
+    ]);
+    centralParts.push(centralHeader);
+    localOffset += localHeader.length + data.length;
+  }
+
+  const local = concatBytes(localParts);
+  const central = concatBytes(centralParts);
+  const end = concatBytes([
+    le32(0x06054B50), le16(0), le16(0), le16(entries.length), le16(entries.length),
+    le32(central.length), le32(local.length), le16(0)
+  ]);
+  return new Blob([local, central, end], { type: 'application/zip' });
+}
+
+async function downloadAllGalleryZip() {
+  if (!downloadGalleryZipBtn) return;
+  const original = downloadGalleryZipBtn.innerHTML;
+  try {
+    downloadGalleryZipBtn.disabled = true;
+    downloadGalleryZipBtn.innerHTML = '<span>⏳</span><strong>Tworzę ZIP...</strong>';
+    const photos = await getGalleryPhotos();
+    if (!photos.length) {
+      showToast('Galeria jest pusta.');
+      return;
+    }
+
+    const counters = {};
+    const entries = [];
+    for (const photo of photos.sort((a,b) => ((a.date || '') + (a.createdAt || '')).localeCompare((b.date || '') + (b.createdAt || '')))) {
+      const folder = photo.date || 'bez-daty';
+      counters[folder] = (counters[folder] || 0) + 1;
+      const index = String(counters[folder]).padStart(3, '0');
+      let name = safeFileName(photo.name || `zdjecie_${index}.jpg`);
+      if (!/\.[a-z0-9]{2,5}$/i.test(name)) {
+        const ext = (photo.type || '').includes('png') ? '.png' : (photo.type || '').includes('webp') ? '.webp' : '.jpg';
+        name += ext;
+      }
+      const bytes = new Uint8Array(await photo.file.arrayBuffer());
+      entries.push({ name: `${folder}/${index}_${name}`, data: bytes, lastModified: photo.createdAt || Date.now() });
+    }
+
+    const zip = buildZip(entries);
+    downloadBlob(zip, `galeria_dom_przy_wisniowa_9_${todayISO()}.zip`);
+    showToast(`Przygotowano ZIP: ${photos.length} zdjęć.`);
+  } catch (error) {
+    console.error(error);
+    showToast('Nie udało się przygotować pliku ZIP.');
+  } finally {
+    downloadGalleryZipBtn.disabled = false;
+    downloadGalleryZipBtn.innerHTML = original;
+  }
+}
+
+function wrapCanvasText(ctx, text, maxWidth) {
+  const paragraphs = String(text || '').split(/\n/);
+  const lines = [];
+  for (const paragraph of paragraphs) {
+    const words = paragraph.split(/\s+/).filter(Boolean);
+    if (!words.length) { lines.push(''); continue; }
+    let line = words.shift();
+    for (const word of words) {
+      const candidate = `${line} ${word}`;
+      if (ctx.measureText(candidate).width <= maxWidth) line = candidate;
+      else { lines.push(line); line = word; }
+    }
+    lines.push(line);
+  }
+  return lines;
+}
+
+function createReportCanvases(expenses) {
+  const W = 1240, H = 1754, M = 88;
+  const pages = [];
+  let canvas, ctx, y;
+
+  function newPage() {
+    canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = '#12263d';
+    ctx.textBaseline = 'top';
+    pages.push(canvas);
+    y = M;
+  }
+
+  function ensure(height) {
+    if (y + height > H - 110) newPage();
+  }
+
+  function text(value, size=34, weight=400, indent=0, maxWidth=W-M*2-indent, lineGap=1.25, color='#12263d') {
+    ctx.font = `${weight} ${size}px Arial, sans-serif`;
+    ctx.fillStyle = color;
+    const lines = wrapCanvasText(ctx, value, maxWidth);
+    const lineH = Math.ceil(size * lineGap);
+    ensure(lines.length * lineH + 8);
+    for (const line of lines) { ctx.fillText(line, M + indent, y); y += lineH; }
+    return lines.length * lineH;
+  }
+
+  function rule() {
+    ensure(24); y += 8; ctx.strokeStyle='#d7dee7'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(M,y); ctx.lineTo(W-M,y); ctx.stroke(); y += 18;
+  }
+
+  function amountRow(label, amount, indent=0) {
+    ctx.font='600 28px Arial, sans-serif';
+    const amountText = formatMoney(amount);
+    const rightW = ctx.measureText(amountText).width;
+    const maxLabel = W - M*2 - indent - rightW - 34;
+    const lines = wrapCanvasText(ctx,label,maxLabel);
+    const h=Math.max(36,lines.length*34);
+    ensure(h+8);
+    ctx.fillStyle='#263b52';
+    lines.forEach((line,i)=>ctx.fillText(line,M+indent,y+i*34));
+    ctx.font='700 28px Arial, sans-serif'; ctx.fillStyle='#12263d'; ctx.fillText(amountText,W-M-rightW,y);
+    y += h+8;
+  }
+
+  newPage();
+  text('Budżet domowy - Dom przy Wiśniowa 9', 42, 800);
+  text('Zbiorczy raport wydatków', 54, 800, 0, W-M*2, 1.08, '#17395f');
+  text(`Wygenerowano: ${new Intl.DateTimeFormat('pl-PL', {dateStyle:'long'}).format(new Date())}`, 24, 400, 0, W-M*2, 1.2, '#607386');
+  rule();
+
+  const total = expenses.reduce((sum,item)=>sum+(Number(item.amount)||0),0);
+  text('Łączne wydatki', 26, 700, 0, W-M*2, 1.2, '#607386');
+  text(formatMoney(total), 54, 800, 0, W-M*2, 1.1, '#17395f');
+  y += 18;
+
+  const categories = {};
+  const months = {};
+  expenses.forEach(item=>{
+    const amount=Number(item.amount)||0;
+    const cat=item.category||'Bez kategorii'; categories[cat]=(categories[cat]||0)+amount;
+    const month=(item.date||'').slice(0,7)||'Brak daty'; months[month]=(months[month]||0)+amount;
+  });
+
+  text('Podsumowanie według kategorii', 34, 800);
+  y += 8;
+  Object.entries(categories).sort((a,b)=>b[1]-a[1]).forEach(([label,value])=>amountRow(label,value));
+  rule();
+
+  text('Podsumowanie według miesięcy', 34, 800);
+  y += 8;
+  Object.entries(months).sort((a,b)=>b[0].localeCompare(a[0])).forEach(([label,value])=>amountRow(formatReportMonthLabel(label),value));
+  rule();
+
+  text('Szczegółowa lista wydatków', 34, 800);
+  y += 12;
+  const sorted=[...expenses].sort((a,b)=>((a.date||'')+(a.createdAt||'')).localeCompare((b.date||'')+(b.createdAt||'')));
+  sorted.forEach((item,index)=>{
+    const note=(item.notes||'').trim();
+    const title=`${index+1}. ${formatExpenseDate(item.date)} - ${item.category||'Bez kategorii'}`;
+    ctx.font='700 28px Arial, sans-serif';
+    const titleLines=wrapCanvasText(ctx,title,W-M*2-240);
+    ctx.font='400 23px Arial, sans-serif';
+    const noteLines=note?wrapCanvasText(ctx,note,W-M*2-35):[];
+    const h=titleLines.length*34+(noteLines.length?noteLines.length*29+10:0)+28;
+    ensure(h+16);
+    ctx.fillStyle='#f4f7fa'; ctx.fillRect(M-14,y-10,W-M*2+28,h+8);
+    ctx.font='700 28px Arial, sans-serif'; ctx.fillStyle='#12263d';
+    titleLines.forEach((line,i)=>ctx.fillText(line,M,y+i*34));
+    const amountText=formatMoney(item.amount); const aw=ctx.measureText(amountText).width;
+    ctx.fillText(amountText,W-M-aw,y);
+    let noteY=y+titleLines.length*34+6;
+    if(noteLines.length){ ctx.font='400 23px Arial, sans-serif'; ctx.fillStyle='#526579'; noteLines.forEach((line,i)=>ctx.fillText(line,M,noteY+i*29)); }
+    y += h+14;
+  });
+
+  pages.forEach((page,i)=>{
+    const c=page.getContext('2d');
+    c.font='400 20px Arial, sans-serif'; c.fillStyle='#7d8b99'; c.textBaseline='top';
+    c.fillText('Copyright Mariusz Gębka', M, H-58);
+    const p=`Strona ${i+1} / ${pages.length}`; const pw=c.measureText(p).width; c.fillText(p,W-M-pw,H-58);
+  });
+  return pages;
+}
+
+function canvasJpeg(canvas) {
+  return new Promise((resolve,reject)=>canvas.toBlob(async blob=>{
+    if(!blob){ reject(new Error('Nie udało się utworzyć obrazu PDF.')); return; }
+    resolve({ bytes:new Uint8Array(await blob.arrayBuffer()), width:canvas.width, height:canvas.height });
+  },'image/jpeg',0.88));
+}
+
+function asciiBytes(text) { return new TextEncoder().encode(text); }
+
+function buildPdfFromJpegs(images) {
+  const parts=[];
+  const offsets=[0];
+  let length=0;
+  const push=bytes=>{ parts.push(bytes); length+=bytes.length; };
+  push(asciiBytes('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n'));
+  const pageRefs=[];
+  images.forEach((_,i)=>pageRefs.push(3+i*3));
+  const objects=[];
+  objects[1]=asciiBytes('<< /Type /Catalog /Pages 2 0 R >>');
+  objects[2]=asciiBytes(`<< /Type /Pages /Count ${images.length} /Kids [${pageRefs.map(n=>`${n} 0 R`).join(' ')}] >>`);
+  images.forEach((img,i)=>{
+    const pageObj=3+i*3, imageObj=4+i*3, contentObj=5+i*3;
+    objects[pageObj]=asciiBytes(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im0 ${imageObj} 0 R >> >> /Contents ${contentObj} 0 R >>`);
+    const imgHead=asciiBytes(`<< /Type /XObject /Subtype /Image /Width ${img.width} /Height ${img.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${img.bytes.length} >>\nstream\n`);
+    objects[imageObj]=concatBytes([imgHead,img.bytes,asciiBytes('\nendstream')]);
+    const stream='q\n595.28 0 0 841.89 0 0 cm\n/Im0 Do\nQ';
+    objects[contentObj]=asciiBytes(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
+  });
+  const maxObj=objects.length-1;
+  for(let i=1;i<=maxObj;i++){
+    offsets[i]=length;
+    push(asciiBytes(`${i} 0 obj\n`)); push(objects[i]); push(asciiBytes('\nendobj\n'));
+  }
+  const xrefOffset=length;
+  let xref=`xref\n0 ${maxObj+1}\n0000000000 65535 f \n`;
+  for(let i=1;i<=maxObj;i++) xref+=`${String(offsets[i]).padStart(10,'0')} 00000 n \n`;
+  xref+=`trailer\n<< /Size ${maxObj+1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+  push(asciiBytes(xref));
+  return new Blob(parts,{type:'application/pdf'});
+}
+
+async function downloadSummaryPdf() {
+  if (!downloadReportPdfBtn) return;
+  const original=downloadReportPdfBtn.innerHTML;
+  try {
+    downloadReportPdfBtn.disabled=true;
+    downloadReportPdfBtn.innerHTML='<span>⏳</span><strong>Tworzę PDF...</strong>';
+    const expenses=await getExpenses();
+    if(!expenses.length){ showToast('Brak wydatków do raportu.'); return; }
+    const canvases=createReportCanvases(expenses);
+    const images=[];
+    for(const canvas of canvases) images.push(await canvasJpeg(canvas));
+    const pdf=buildPdfFromJpegs(images);
+    downloadBlob(pdf,`raport_budzet_domowy_${todayISO()}.pdf`);
+    showToast('Raport PDF został przygotowany.');
+  } catch(error){
+    console.error(error);
+    showToast('Nie udało się przygotować raportu PDF.');
+  } finally {
+    downloadReportPdfBtn.disabled=false;
+    downloadReportPdfBtn.innerHTML=original;
+  }
+}
+
+if (downloadReportPdfBtn) downloadReportPdfBtn.addEventListener('click', downloadSummaryPdf);
+if (downloadGalleryZipBtn) downloadGalleryZipBtn.addEventListener('click', downloadAllGalleryZip);
+
 if (reportMonthClose) {
   reportMonthClose.addEventListener('click', () => {
     reportMonthDetails.hidden = true;
@@ -836,7 +1175,7 @@ galleryDateInput.value = todayISO();
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./sw.js?v=1019');
+      const registration = await navigator.serviceWorker.register('./sw.js?v=1022');
       await registration.update();
 
       let refreshing = false;
